@@ -11,7 +11,9 @@ func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api", logger.New())
 	api.Get("/", homeHandler)
 	app.Use(func(c *fiber.Ctx) error {
-		return c.SendStatus(404) // => 404 "Not Found"
+		return c.Status(418).JSON(&fiber.Map{
+			"Message": "🍏 Route not found",
+		}) // => 418 "I am a tepot"
 	})
 }
 

@@ -83,6 +83,10 @@ func TestDeposit(t *testing.T) {
 }
 
 func TestWitdrawals(t *testing.T) {
+	if err := database.Connect(); err != nil {
+		fmt.Printf("DB ERROR %v", err)
+	}
+	defer database.DB.Close()
 	tt := []struct {
 		name         string
 		accountid    string
@@ -101,13 +105,18 @@ func TestWitdrawals(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			//Get Wallet
 			w := Wallet{name: tc.accountid, balance: tc.inital}
+			w.Create()
 			//Attempt to withdraw
 			if w.Withdraw(tc.withdrawal) == tc.possible {
 				//Check New Balance
 				newBalance := w.GetBalance()
 				if newBalance != tc.finalbalance {
-					t.Errorf("Inital Balance was %v Deposited Amount %v and expected Balance to be %v not -> %v", tc.inital, tc.withdrawal, tc.finalbalance, newBalance)
+					t.Errorf("Inital Balance was %v Withdrew Amount %v and expected Balance to be %v not -> %v", tc.inital, tc.withdrawal, tc.finalbalance, newBalance)
 				}
+			}
+
+			if err := w.Delete(); err != nil {
+				t.Errorf("Cannot delete wallet %s because : %v", w.name, err)
 			}
 		})
 	}

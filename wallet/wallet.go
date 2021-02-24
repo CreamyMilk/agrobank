@@ -27,7 +27,7 @@ func (w *Wallet) Create() error {
 
 //Delete Destorys Wallets after testing
 func (w *Wallet) Delete() error {
-	_, err := database.DB.Query("DELETE FROM wallets_store WHERE wallet_name = ?", w.name)
+	_, err := database.DB.Exec("DELETE FROM wallets_store WHERE wallet_name = ?", w.name)
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (w *Wallet) Deposit(amount int64) bool {
 	if amount < 1 {
 		return false
 	}
-	_, err := database.DB.Query("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newBalance, w.name)
+	_, err := database.DB.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newBalance, w.name)
 	if err != nil {
 		fmt.Printf("-------------->%v", err)
 	}
@@ -63,7 +63,7 @@ func (w *Wallet) Deposit(amount int64) bool {
 func (w *Wallet) Withdraw(amount int64) bool {
 
 	currentBalance := w.GetBalance()
-	if amount <= 0 {
+	if amount < 0 {
 		return false
 	}
 	if amount > currentBalance {
@@ -71,7 +71,7 @@ func (w *Wallet) Withdraw(amount int64) bool {
 	}
 
 	newBalance := currentBalance - amount
-	_, err := database.DB.Query("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newBalance, w.name)
+	_, err := database.DB.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newBalance, w.name)
 	if err != nil {
 		fmt.Printf("-------------->%v", err)
 	}

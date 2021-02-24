@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	//Used to provide postgress driver for database/sql package
-	_ "github.com/lib/pq"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 //DB holds global database object
@@ -15,15 +15,16 @@ var DB *sql.DB
 const (
 	host     = "localhost"
 	port     = 5432 // Default port
-	user     = "postgres"
-	password = "password"
-	dbname   = "ams_demo"
+	user     = "root"
+	password = "test_pass"
+	dbname   = "agrodb"
 )
 
 // Connect to db
 func Connect() error {
 	var err error
-	DB, err = sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
+
+	DB, err = sql.Open("mysql", fmt.Sprintf("%s:%s@/%s", user, password, dbname))
 	if err != nil {
 		return err
 	}
