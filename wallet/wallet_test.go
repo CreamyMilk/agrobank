@@ -1,10 +1,18 @@
 package wallet
 
 import (
+	"fmt"
 	"testing"
+
+	"github.com/CreamyMilk/agrobank/database"
 )
 
 func TestBalance(t *testing.T) {
+	if err := database.Connect(); err != nil {
+		fmt.Printf("DB ERROR %v", err)
+	}
+	defer database.DB.Close()
+
 	tt := []struct {
 		name      string
 		accountid string
@@ -18,17 +26,27 @@ func TestBalance(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			w := Wallet{id: tc.accountid, balance: tc.balance}
+			w := Wallet{name: tc.accountid, balance: tc.balance}
+			e := w.Create()
+			if e != nil {
+				t.Errorf("Cannot create account because %v", e)
+			}
 			balance := w.GetBalance()
 			if balance != tc.balance {
 				t.Errorf("Expected Wallet Balance to be %v but got %v", tc.balance, balance)
 			}
+			if err := w.Delete(); err != nil {
+				t.Errorf("Cannot delete wallet %s because : %v", w.name, err)
+			}
 		})
 	}
-
 }
 
 func TestDeposit(t *testing.T) {
+	if err := database.Connect(); err != nil {
+		fmt.Printf("DB ERROR %v", err)
+	}
+	defer database.DB.Close()
 	tt := []struct {
 		name         string
 		accountid    string
@@ -44,8 +62,11 @@ func TestDeposit(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			//Get Wallet
-			w := Wallet{id: tc.accountid, balance: tc.inital}
+			w := Wallet{name: tc.accountid, balance: tc.inital}
+			e := w.Create()
+			if e != nil {
+				t.Errorf("Cannot create account because %v", e)
+			}
 			//Attempt to deposit
 			if w.Deposit(tc.deposit) == tc.possible {
 				//Check New Balance
@@ -53,6 +74,9 @@ func TestDeposit(t *testing.T) {
 				if newBalance != tc.finalbalance {
 					t.Errorf("Inital Balance was %v Deposited Amount %v and expected Balance to be %v not -> %v", tc.inital, tc.deposit, tc.finalbalance, newBalance)
 				}
+			}
+			if err := w.Delete(); err != nil {
+				t.Errorf("Cannot delete wallet %s because : %v", w.name, err)
 			}
 		})
 	}
@@ -76,7 +100,7 @@ func TestWitdrawals(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			//Get Wallet
-			w := Wallet{id: tc.accountid, balance: tc.inital}
+			w := Wallet{name: tc.accountid, balance: tc.inital}
 			//Attempt to withdraw
 			if w.Withdraw(tc.withdrawal) == tc.possible {
 				//Check New Balance
