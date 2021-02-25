@@ -15,6 +15,9 @@ type Wallet struct {
 
 //Create Adds New wallet into db
 func (w *Wallet) Create() error {
+	if w.name == "" {
+		return fmt.Errorf("Cannont create accouts without id")
+	}
 	_, err := database.DB.Query("INSERT INTO wallets_store (wallet_name,balance) VALUES (?, ?)", w.name, w.balance)
 	if err != nil {
 		if err.(*mysql.MySQLError).Number == 1062 { //Duplicate errors should be ignored
@@ -45,23 +48,8 @@ func (w *Wallet) GetBalance() int64 {
 	return w.balance
 }
 
-//Deposit adds Funds to wallet
-func (w *Wallet) Deposit(amount int64) bool {
-	newBalance := w.GetBalance() + amount
-	if amount < 1 {
-		return false
-	}
-	_, err := database.DB.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newBalance, w.name)
-	if err != nil {
-		fmt.Printf("-------------->%v", err)
-	}
-	w.balance = w.GetBalance()
-	return true
-}
-
 //Withdraw Initiates a withdrawal event
 func (w *Wallet) Withdraw(amount int64) bool {
-
 	currentBalance := w.GetBalance()
 	if amount < 0 {
 		return false
@@ -76,5 +64,86 @@ func (w *Wallet) Withdraw(amount int64) bool {
 		fmt.Printf("-------------->%v", err)
 	}
 	w.balance = w.GetBalance()
+	return true
+}
+
+//Deposit is a transactional representaition of old deposit
+func (w *Wallet) Deposit(amount int64) bool {
+	tempBalance := 0
+	tx, err := database.DB.Begin()
+	if err != nil {
+		tx.Rollback()
+		return false
+	}
+
+	getBalStm, err := tx.Prepare("SELECT balance FROM wallets_store WHERE wallet_name = ?")
+	getBalStm.QueryRow(w.name).Scan(&tempBalance)
+	defer getBalStm.Close()
+
+	newBalance := int64(tempBalance) + amount
+	if amount < 1 {
+		tx.Rollback()
+		return false
+	}
+	_, err = tx.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newBalance, w.name)
+	if err != nil {
+		tx.Rollback()
+		fmt.Printf("-------------->%v", err)
+	}
+	w.balance = int64(tempBalance)
+	tx.Commit()
+	return true
+}
+
+//SendMoney is used to move money from account a to account b
+func (w *Wallet) SendMoney(amountToSend int64, recipientW Wallet) bool {
+	tx, err := database.DB.Begin()
+	if err != nil {
+		tx.Rollback()
+		return false
+	}
+	if amountToSend < 0 {
+		tx.Rollback()
+		return false
+	}
+
+	err = tx.QueryRow("SELECT balance FROM wallets_store WHERE wallet_name = ?", w.name).Scan(&w.balance)
+	if err != nil {
+		tx.Rollback()
+		return false
+	}
+	if amountToSend >= w.balance {
+		tx.Rollback()
+		return false
+	}
+
+	if recipientW.name == "" {
+		tx.Rollback()
+		return false
+	}
+
+	newSenderBalance := w.balance - amountToSend
+	_, err = tx.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newSenderBalance, w.name)
+	if err != nil {
+		tx.Rollback()
+		fmt.Printf("-------------->%v", err)
+		return false
+	}
+
+	err = tx.QueryRow("SELECT balance FROM wallets_store WHERE wallet_name = ?", recipientW.name).Scan(&recipientW.balance)
+	if err != nil {
+		tx.Rollback()
+		return false
+	}
+	newRecipientBalance := recipientW.balance + amountToSend
+
+	_, err = tx.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newRecipientBalance, recipientW.name)
+	if err != nil {
+		tx.Rollback()
+		fmt.Printf("-------------->%v", err)
+		return false
+	}
+	tx.Commit()
+	//tx.Exec("INSERT INTO LEDGER")
 	return true
 }
