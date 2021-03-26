@@ -16,7 +16,7 @@ type Wallet struct {
 //Create Adds New wallet into db
 func (w *Wallet) Create() error {
 	if w.name == "" {
-		return fmt.Errorf("Cannont create accouts without id")
+		return fmt.Errorf("cannot create accouts without id %v", "oya")
 	}
 	_, err := database.DB.Query("INSERT INTO wallets_store (wallet_name,balance) VALUES (?, ?)", w.name, w.balance)
 	if err != nil {
@@ -79,7 +79,9 @@ func (w *Wallet) Deposit(amount int64) bool {
 	getBalStm, err := tx.Prepare("SELECT balance FROM wallets_store WHERE wallet_name = ?")
 	getBalStm.QueryRow(w.name).Scan(&tempBalance)
 	defer getBalStm.Close()
-
+	if err != nil {
+		return false
+	}
 	newBalance := int64(tempBalance) + amount
 	if amount < 1 {
 		tx.Rollback()
@@ -102,17 +104,30 @@ func (w *Wallet) SendMoney(amountToSend int64, recipientW Wallet) bool {
 		tx.Rollback()
 		return false
 	}
-	if amountToSend < 0 {
+	if amountToSend <= 0 {
 		tx.Rollback()
 		return false
 	}
-
+	//get current balance
 	err = tx.QueryRow("SELECT balance FROM wallets_store WHERE wallet_name = ?", w.name).Scan(&w.balance)
 	if err != nil {
 		tx.Rollback()
 		return false
 	}
-	if amountToSend >= w.balance {
+
+	transactionCost := 0
+	err = tx.QueryRow("SELECT cost FROM transaction_costs WHERE upper_limit >= ? LIMIT 1", amountToSend).Scan(&transactionCost)
+	if err != nil {
+		tx.Rollback()
+		return false
+	}
+	//Transaction is over system limit
+	if transactionCost == 0 {
+		tx.Rollback()
+		return false
+	}
+
+	if amountToSend+int64(transactionCost) >= w.balance {
 		tx.Rollback()
 		return false
 	}
@@ -122,7 +137,7 @@ func (w *Wallet) SendMoney(amountToSend int64, recipientW Wallet) bool {
 		return false
 	}
 
-	newSenderBalance := w.balance - amountToSend
+	newSenderBalance := w.balance - (amountToSend + int64(transactionCost))
 	_, err = tx.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newSenderBalance, w.name)
 	if err != nil {
 		tx.Rollback()
@@ -143,7 +158,7 @@ func (w *Wallet) SendMoney(amountToSend int64, recipientW Wallet) bool {
 		fmt.Printf("-------------->%v", err)
 		return false
 	}
+
 	tx.Commit()
-	//tx.Exec("INSERT INTO LEDGER")
 	return true
 }

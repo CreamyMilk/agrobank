@@ -13,7 +13,7 @@ The raw sql is stored here for research a testing purposes
 * ledger
 * products
 * categories
-
+* transaction_cost_rate
 
 ## QUERIES
 ---- 
