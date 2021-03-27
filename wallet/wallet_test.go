@@ -138,19 +138,16 @@ func TestSendMoney(t *testing.T) {
 		finalA     int64
 		finalB     int64
 	}{
-		// {"Receipient", "A001", 0, "P", 0, 200, false, 1000, 500},
 		{"SendingZero", "L001", 1000, "F001", 500, 0, false, 1000, 500},
 		{"Too RichFor System", "BAZO001", 999999999999999999, "HUST0001", 999, 1000000000000000000, false, 999999999999999999, 999},
 		{"Confirm Charges", "HUSTER001", 150, "NDIZI", 5000, 148, false, 150, 5000},
 		//{"Ghost Sending", "L001", 1000, "", 0, 10, false, 1000, 0},
-		{"Bob 1", "L001", 1000, "F001", 500, 999, false, 1000, 500},
-		{"Bob 1", "L001", 1000, "F001", 500, 999, false, 1000, 500},
-		{"Bob 1", "L001", 1000, "F001", 500, 999, false, 1000, 500},
+		{"Lacks Transaction Cost", "L001", 1000, "F001", 500, 999, false, 1000, 500},
 		{"NegativeAmount", "A002", 1000, "B002", 500, -23, false, 1000, 500},
-		{"SenderHasLess", "L001", 1000, "F001", 300, 1500, false, 1000, 300},
-		{"SenderEverything", "L001", 1000, "F001", 500, 1000, false, 1000, 500},
-		{"RecepietBal0", "C001", 1000, "D001", 0, 500, true, 500, 500},
-		{"Normal", "L001", 7000, "F001", 500, 6000, true, 1000, 6500},
+		{"Sender Has Less", "L001", 1000, "F001", 300, 1500, false, 1000, 300},
+		{"Sender Everything", "L001", 1000, "F001", 500, 1000, false, 1000, 500},
+		{"Receiver Balance is 0", "C001", 1000, "D001", 0, 500, true, 495, 500},
+		{"Ideal Transaction", "J0T1", 7000, "B007", 500, 6300, true, 690, 6800},
 	}
 
 	for _, tc := range tt {

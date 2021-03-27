@@ -20,6 +20,7 @@ func main() {
 	if err := database.Connect(); err != nil {
 		fmt.Printf("DB ERROR %v", err)
 	}
+
 	defer database.DB.Close()
 
 	app.Listen(":3000")

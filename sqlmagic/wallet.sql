@@ -1,5 +1,6 @@
 CREATE DATABASE agrodb;
 USE agrodb;
+
 CREATE TABLE wallets_store (
     wid int NOT NULL AUTO_INCREMENT,
     wallet_name VARCHAR(100) UNIQUE,
@@ -12,6 +13,17 @@ CREATE TABLE transaction_costs(
     upper_limit BIGINT,
     cost BIGINT,
     PRIMARY KEY (rate_id)
+);
+
+CREATE TABLE transactions_list(
+    tid int NOT NULL AUTO_INCREMENT,
+    transuuid       VARCHAR(100) UNIQUE,
+    sender_name     VARCHAR(100),
+    receiver_name   VARCHAR(100),
+    amount BIGINT,
+    charge BIGINT,
+    craetedAt   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (tid)
 );
 
 INSERT INTO transaction_costs (upper_limit,cost) VALUES (100,1);
@@ -30,11 +42,7 @@ INSERT INTO wallets_store (wallet_name,balance) VALUES("JOB",1000);
 SELECT * FROM wallets_store;
 
 
-CREATE TABLE transactions_list{
-    transID       VARCHAR(100) UNIQUE,
-    sender_name   VARCHAR(100) UNIQUE,
-    receiver_name VARCHAR(100) UNIQUE
-}
+INSERT INTO transactions_list (transuuid,sender_name,receiver_name,amount,charge) VALUES ("Tx1010-ABCD-1201-A","T001","P001",1000,5);
 
 CREATE TABLE [IF NOT EXISTS] ledger(
     event_id serial PRIMARY KEY,
