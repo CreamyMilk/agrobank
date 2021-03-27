@@ -67,7 +67,6 @@ func (w *Wallet) Withdraw(amount int64) bool {
 	if amount > currentBalance {
 		return false
 	}
-
 	newBalance := currentBalance - amount
 	_, err := database.DB.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newBalance, w.name)
 	if err != nil {
