@@ -22,6 +22,7 @@ func MakeWallet(name string, amount int64) Wallet {
 
 const upperBytes = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const lowerBytes = "abcdefghijklmnopqrstuvwxyz"
+const SENDMONEY_TYPE = 2
 
 //Create Adds New wallet into db
 func (w *Wallet) Create() error {
@@ -183,7 +184,7 @@ func (w *Wallet) SendMoney(amountToSend int64, recipientW Wallet) (string, bool)
 
 	//generate transaction of what had occured
 	genereatedId := MakeTransactionCode()
-	_, err = tx.Exec("INSERT INTO transactions_list (transuuid,sender_name,receiver_name,amount,charge) VALUES (?,?,?,?,?)", genereatedId, w.name, recipientW.name, amountToSend, transactionCost)
+	_, err = tx.Exec("INSERT INTO transactions_list (transuuid,sender_name,receiver_name,amount,charge,ttype) VALUES (?,?,?,?,?,?)", genereatedId, w.name, recipientW.name, amountToSend, transactionCost, SENDMONEY_TYPE)
 	if err != nil {
 		errorMessage = ""
 		tx.Rollback()

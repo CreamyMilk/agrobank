@@ -1,6 +1,6 @@
 -- Prototype first
 
-User fills in f<rms he can continue where he/she stopped 
+User fills in forms he can continue where he/she stopped 
 
 User should be able to submit two photos -ID + Him/her self
 - image will be handeld as the user takes photo we upload to server and 
@@ -13,7 +13,7 @@ send back a 201 response indicating
 that registration fee
 
 [details,number,images,registration point]
-points can be eiter 
+points can be either 
 - form filling
 - Payment 
 - Done
@@ -80,9 +80,16 @@ CREATE TABLE user_registration (
 
 
 INSERT INTO user_registration (idnumber,idpic,phonenumber,userpic,email,baddress,residence,role)
-VALUES ("1091091","https://static.agro","254797333333",
-"https://stattic.agro","exaple@com","-2010,2000","BondoSouth",
-"Farmer",0)
+VALUES (
+"1091091",
+"https://static.agro",
+"254797333333",
+"https://stattic.agro",
+"exaple@com",
+"-2010,2000",
+"BondoSouth",
+"Farmer",
+0)
 // on Sends user to the paymentspage
 {
     "status":"0",
@@ -119,8 +126,6 @@ CREATE TABLE notifications_table{
     socketID,    
 }
 
-
-
 on callback use the following to determine if to move user to next stage
 or just delete the record from the table
 CREATE TABLE user_payment_limbo(
@@ -130,9 +135,5 @@ CREATE TABLE user_payment_limbo(
 )
 
 when payment is sucessful redirect  user to login page
-
-
-
-
 
 
