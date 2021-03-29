@@ -107,92 +107,96 @@ func (w *Wallet) Deposit(amount int64) bool {
 }
 
 //SendMoney is used to move money from account a to account b
-func (w *Wallet) SendMoney(amountToSend int64, recipientW Wallet) bool {
+func (w *Wallet) SendMoney(amountToSend int64, recipientW Wallet) (string, bool) {
 	tx, err := database.DB.Begin()
+	errorMessage := ""
 	if err != nil {
-
 		tx.Rollback()
-		return false
+		return errorMessage, false
 	}
 	if amountToSend <= 0 {
-		//fmt.Println("Less Amount Error")
+		errorMessage = "You cannot send negative values."
 		tx.Rollback()
-		return false
+		return errorMessage, false
+	}
+	//You cannot send to self
+	if w.name == recipientW.name {
+		tx.Rollback()
+		return errorMessage, false
 	}
 	//get current balance
 	err = tx.QueryRow("SELECT balance FROM wallets_store WHERE wallet_name = ?", w.name).Scan(&w.balance)
 	if err != nil {
-		//fmt.Println("Get Balance Error")
+		errorMessage = "Could not retrieve your balance."
 		tx.Rollback()
-		return false
+		return errorMessage, false
 	}
 
 	transactionCost := 0
 	err = tx.QueryRow("SELECT cost FROM transaction_costs WHERE upper_limit >= ? LIMIT 1", amountToSend).Scan(&transactionCost)
 	if err != nil {
-		//fmt.Println("Fetch Cost Error")
+		errorMessage = "Could not retrieve your balance."
 		tx.Rollback()
-		return false
+		return errorMessage, false
 	}
 	//Transaction is over system limit
 	if transactionCost == 0 {
-		//fmt.Println("Too much funds requested")
+		errorMessage = "Too much funds requested."
 		tx.Rollback()
-		return false
+		return errorMessage, false
 	}
 
 	if amountToSend+int64(transactionCost) >= w.balance {
-		//fmt.Println("Does not have transaction cost")
+		errorMessage = "Does not have transaction cost"
 		tx.Rollback()
-		return false
+		return errorMessage, false
 	}
 
 	if recipientW.name == "" {
-		//fmt.Println("Blank receiver")
+		errorMessage = "Blank receiver"
 		tx.Rollback()
-		return false
+		return errorMessage, false
 	}
 
 	newSenderBalance := w.balance - (amountToSend + int64(transactionCost))
 	_, err = tx.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newSenderBalance, w.name)
 	if err != nil {
-		//fmt.Println("No update to sender balance")
+		errorMessage = "No update to sender balance"
 		tx.Rollback()
-		//fmt.Printf("-------------->%v", err)
-		return false
+		return errorMessage, false
 	}
 
 	err = tx.QueryRow("SELECT balance FROM wallets_store WHERE wallet_name = ?", recipientW.name).Scan(&recipientW.balance)
 	if err != nil {
-		//fmt.Println("Could not get current balance")
+		errorMessage = "Could not get current balance"
 		tx.Rollback()
-		return false
+		return errorMessage, false
 	}
 	newRecipientBalance := recipientW.balance + amountToSend
 
 	_, err = tx.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newRecipientBalance, recipientW.name)
 	if err != nil {
-		//fmt.Println("No update to receiver balance")
+		errorMessage = "No update to receiver balance"
 		tx.Rollback()
-		//fmt.Printf("-------------->%v", err)
-		return false
+		return errorMessage, false
 	}
 
 	//generate transaction of what had occured
 	genereatedId := MakeTransactionCode()
 	_, err = tx.Exec("INSERT INTO transactions_list (transuuid,sender_name,receiver_name,amount,charge) VALUES (?,?,?,?,?)", genereatedId, w.name, recipientW.name, amountToSend, transactionCost)
 	if err != nil {
-		//fmt.Printf("Ledger enter not made %v\n", err)
+		errorMessage = ""
 		tx.Rollback()
-		return false
+		return errorMessage, false
 	}
 	tx.Commit()
-	return true
+	return "", true
 }
 func MakeTransactionCode() string {
 	//Add check to ensute geberated uuuids here
 	return uuidgen()
 }
+
 func uuidgen() string {
 	rand.Seed(time.Now().UnixNano())
 	uuid := "Tx"
