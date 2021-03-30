@@ -1,8 +1,8 @@
--- Prototype first
-
+--- Prototype first
 User fills in forms he can continue where he/she stopped 
-
-User should be able to submit two photos -ID + Him/her self
+User should be able to submit two photos 
+    - ID 
+    - Him/her self
 - image will be handeld as the user takes photo we upload to server and 
 return the url back to the user
 
@@ -65,18 +65,6 @@ initate Payemnt towards a certain product
 Load Wallet
 Withdraw form wallet
 
-CREATE TABLE user_registration (
-    userid ,
-    idnumber,
-    idpic,
-    phonenumber,
-    userpic,
-    email,
-    Bussiness/Farm address, -> Cords
-    Residence,
-    Role,
-    stage
-)
 
 
 INSERT INTO user_registration (idnumber,idpic,phonenumber,userpic,email,baddress,residence,role)
