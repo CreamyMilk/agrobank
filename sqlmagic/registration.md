@@ -1,12 +1,26 @@
---- Prototype first
+--- Registration Flow
+
 User fills in forms he can continue where he/she stopped 
 User should be able to submit two photos 
     - ID 
     - Him/her self
-- image will be handeld as the user takes photo we upload to server and 
-return the url back to the user
+User on submit show bottom sheet to change Number
+User will be able to iniate STK PUSH and change the number in order to facilitate registration completion
+{
+    "number":
+    "fcm":
+    "details":"Form Complete"
+}
 
-User can seek to finalize their registration 
+on the server validate details if they pass criterior send STK PUSH 
+on SuccesfulCallBack if sucessful login the user/Redirect to login page
+else Show a popup to retry again or to cancel
+
+
+
+
+
+
 ->User sends form progress if all is well 
 send back a 201 response indicating
 

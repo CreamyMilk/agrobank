@@ -148,13 +148,13 @@ func (w *Wallet) SendMoney(amountToSend int64, recipientW Wallet) (string, bool)
 	}
 
 	if amountToSend+int64(transactionCost) >= w.balance {
-		errorMessage = "Does not have transaction cost"
+		errorMessage = "Does not have transaction cost."
 		tx.Rollback()
 		return errorMessage, false
 	}
 
 	if recipientW.name == "" {
-		errorMessage = "Blank receiver"
+		errorMessage = "The Receipient seems to be invalid."
 		tx.Rollback()
 		return errorMessage, false
 	}
@@ -194,7 +194,7 @@ func (w *Wallet) SendMoney(amountToSend int64, recipientW Wallet) (string, bool)
 	return "", true
 }
 func MakeTransactionCode() string {
-	//Add check to ensute geberated uuuids here
+	//Add check to ensure generated uuuids here
 	return uuidgen()
 }
 
