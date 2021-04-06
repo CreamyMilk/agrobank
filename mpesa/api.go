@@ -15,7 +15,6 @@ type Env string
 const (
 	// SANDBOX is the sandbox env tag
 	SANDBOX = iota
-	// PRODUCTION is the production env tag
 	PRODUCTION
 )
 
@@ -26,8 +25,8 @@ type Service struct {
 	Env       int
 }
 
-// New return a new Mpesa Service
-func New(appKey, appSecret string, env int) (Service, error) {
+// NewPaymentService return a new Mpesa Service
+func NewPaymentService(appKey, appSecret string, env int) (Service, error) {
 	return Service{appKey, appSecret, env}, nil
 }
 
@@ -64,8 +63,8 @@ func (s Service) auth() (string, error) {
 	return accessToken, nil
 }
 
-// Simulation requests user device for payment
-func (s Service) Simulation(express Express) (string, error) {
+// SendSTK requests user device for payment
+func (s Service) SendSTK(express STKPush) (string, error) {
 	body, err := json.Marshal(express)
 	if err != nil {
 		return "", err
@@ -85,7 +84,7 @@ func (s Service) Simulation(express Express) (string, error) {
 }
 
 // TransactionStatus gets status of a transaction
-func (s Service) TransactionStatus(express Express) (string, error) {
+func (s Service) TransactionStatus(express STKPush) (string, error) {
 	body, err := json.Marshal(express)
 	if err != nil {
 		return "", err

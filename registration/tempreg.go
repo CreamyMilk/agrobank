@@ -2,6 +2,7 @@ package registration
 
 import (
 	"github.com/CreamyMilk/agrobank/database"
+	"github.com/CreamyMilk/agrobank/mpesa"
 )
 
 type RegistrationLimbo struct {
@@ -25,7 +26,7 @@ func (r *RegistrationLimbo) TempCreate() error {
 	return nil
 }
 
-func (r *RegistrationLimbo) SendPaymentRequest() error {
-	//mpesa.SendSTK(r.phoneNumber, REGISTRATIONCOST)
+func (r *RegistrationLimbo) SendPayment() error {
+	mpesa.SendPaymentRequest(r.phoneNumber, REGISTRATIONCOST)
 	return nil
 }

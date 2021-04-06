@@ -47,8 +47,8 @@ type B2B struct {
 	ResultURL              string
 }
 
-// Express is a model
-type Express struct {
+// STKPush is a model
+type STKPush struct {
 	BusinessShortCode string
 	Password          string
 	Timestamp         string
@@ -65,11 +65,11 @@ type Express struct {
 var defaultTransactionType = "CustomerPayBillOnline"
 
 // NewExpress creates an express request object. Does the password generation and timestamp
-func NewExpress(shortCode string, amount int, phoneNumber, callbackURL, ref, desc, passkey string) *Express {
+func NewExpress(shortCode string, amount int, phoneNumber, callbackURL, ref, desc, passkey string) *STKPush {
 	timestamp := time.Now().Format("20060102030405")
 	password := GeneratePassword(shortCode, passkey, timestamp)
 
-	return &Express{
+	return &STKPush{
 		BusinessShortCode: shortCode,
 		Password:          password,
 		Timestamp:         timestamp,
