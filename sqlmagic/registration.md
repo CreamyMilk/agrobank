@@ -17,10 +17,6 @@ on SuccesfulCallBack if sucessful login the user/Redirect to login page
 else Show a popup to retry again or to cancel
 
 
-
-
-
-
 ->User sends form progress if all is well 
 send back a 201 response indicating
 

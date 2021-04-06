@@ -20,10 +20,6 @@ func MakeWallet(name string, amount int64) Wallet {
 	return Wallet{name: name, balance: amount}
 }
 
-const upperBytes = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-const lowerBytes = "abcdefghijklmnopqrstuvwxyz"
-const SENDMONEY_TYPE = 2
-
 //Create Adds New wallet into db
 func (w *Wallet) Create() error {
 	if w.name == "" {
