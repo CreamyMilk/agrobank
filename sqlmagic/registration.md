@@ -6,13 +6,26 @@ User should be able to submit two photos
     - Him/her self
 User on submit show bottom sheet to change Number
 User will be able to iniate STK PUSH and change the number in order to facilitate registration completion
-{
-    "number":
-    "fcm":
-    "details":"Form Complete"
-}
+```json
+curl --header "Content-Type: application/json"   --request POST   --data '
+    {
+"name"        :"Peter",    
+"idnumber"    :"38994566",  
+"photourl"    :"https://google.com",
+"phone"       :"0797678252", 
+"email"       :"me@gmail.com", 
+"fcmtoken"    :"FCMTOKENSAMPLE", 
+"informaladdress":"bomasout", 
+"xcords"      :"2.000023", 
+"ycords"      :"5.000010", 
+"role"        :"Logistics"
+}' http://localhost:3000/treg
 
-on the server validate details if they pass criterior send STK PUSH 
+```
+on the server validate details if they pass criterior
+ send STK PUSH 
+if they cancal they can just resubmit the data because this is just a limbo table
+
 on SuccesfulCallBack if sucessful login the user/Redirect to login page
 else Show a popup to retry again or to cancel
 

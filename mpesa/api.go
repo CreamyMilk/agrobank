@@ -53,7 +53,10 @@ func (s Service) auth() (string, error) {
 	}
 
 	var authResp authResponse
-
+	var tempSTK map[string]string
+	body, _ := ioutil.ReadAll(res.Body)
+	json.Unmarshal([]byte(body), &tempSTK)
+	fmt.Printf("\n%v", url)
 	err = json.NewDecoder(res.Body).Decode(&authResp)
 	if err != nil {
 		return "", fmt.Errorf("could not decode auth response: %v", err)

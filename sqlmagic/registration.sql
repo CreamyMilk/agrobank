@@ -29,7 +29,7 @@ CREATE TABLE registration_limbo (
     stkPushid       VARCHAR(100),
     photo_url       VARCHAR(100),
     email           VARCHAR(1000),
-    informal_ddress VARCHAR(1000),
+    informal_address VARCHAR(1000),
     xCords          VARCHAR(100),
     yCords          VARCHAR(100),
     role            VARCHAR(100),
@@ -37,5 +37,5 @@ CREATE TABLE registration_limbo (
     PRIMARY KEY(registerID)
 );
 
-INSERT registration_limbo (idnumber,phonenumber,fcmToken,stkPushid,photo_url,email,informal_ddress,xCords,yCords,role) VALUES
+INSERT registration_limbo (idnumber,phonenumber,fcmToken,stkPushid,photo_url,email,informal_address,xCords,yCords,role) VALUES
 ("144433434","0788787878","eg32","","https://pic","cool@example.com","kiambu south","10.00","10.00","Farmer");

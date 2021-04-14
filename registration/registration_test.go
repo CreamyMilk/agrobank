@@ -25,25 +25,25 @@ func TestNormalRegistration(t *testing.T) {
 		ycordinates     string
 		role            string
 	}{
-		{"Normal", "14489829", "phtourl", "photonumber", "email", "fcm", "informal", "xcord", "ycord", "teach"},
-		{"Normal", "34234322", "phtourl", "photonumber", "email", "fcm", "informal", "xcord", "ycord", "teach"},
-		{"Normal", "34342555", "phtourl", "photonumber", "email", "fcm", "informal", "xcord", "ycord", "teach"},
-		{"Normal", "88888856", "phtourl", "photonumber", "email", "fcm", "informal", "xcord", "ycord", "teach"},
-		{"Normal", "45354345", "phtourl", "photonumber", "email", "fcm", "informal", "xcord", "ycord", "teach"},
+		{"Ideal", "14489829", "phtourl", "254797678252", "email", "fcm", "informal", "xcord", "ycord", "teach"},
+		{"Normal", "34234322", "phtourl", "254677234534", "email", "fcm", "informal", "xcord", "ycord", "teach"},
+		{"Normal", "34342555", "phtourl", "254214690431", "email", "fcm", "informal", "xcord", "ycord", "teach"},
+		{"Normal", "88888856", "phtourl", "254203040202", "email", "fcm", "informal", "xcord", "ycord", "teach"},
+		{"Normal", "45354345", "phtourl", "254799029029", "email", "fcm", "informal", "xcord", "ycord", "teach"},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			rl := RegistrationLimbo{
-				idNumber:        tc.idNumber,
-				phoneNumber:     tc.phoneNumber,
-				photoUrl:        tc.photoUrl,
-				email:           tc.email,
-				fcmToken:        tc.fcmToken,
-				informalAddress: tc.informalAddress,
-				xcordinates:     tc.xcordinates,
-				ycordinates:     tc.ycordinates,
-				role:            tc.role}
+				IdNumber:        tc.idNumber,
+				PhoneNumber:     tc.phoneNumber,
+				PhotoUrl:        tc.photoUrl,
+				Email:           tc.email,
+				FcmToken:        tc.fcmToken,
+				InformalAddress: tc.informalAddress,
+				Xcordinates:     tc.xcordinates,
+				Ycordinates:     tc.ycordinates,
+				Role:            tc.role}
 			err := rl.TempCreate()
 			if err != nil {
 				t.Errorf("Cannot create account because %v", err)
