@@ -32,6 +32,64 @@ if they cancal they can just resubmit the data because this is just a limbo tabl
 on SuccesfulCallBack if sucessful login the user/Redirect to login page
 else Show a popup to retry again or to cancel
 
+```json
+curl --header "Content-Type: application/json"   --request POST   --data '{
+"_id": "5f479b16185f270004ddcd02",
+"Body": {
+"stkCallback": {
+"MerchantRequestID": "28288-21648703-1",
+"CheckoutRequestID": "ws_CO_140420211216377239",
+"ResultCode": 0,
+"ResultDesc": "The service request is processed successfully.",
+"CallbackMetadata": {
+"Item": [
+{
+"Name": "Amount",
+"Value": 1
+},
+{
+"Name": "MpesaReceiptNumber",
+"Value": "OHR1Z5U0ZV"
+},
+{
+"Name": "TransactionDate",
+"Value": 20200827143757
+},
+{
+"Name": "PhoneNumber",
+"Value": 254720342252
+}
+]
+}
+}
+}
+}
+' http://localhost:3000/stkcall
+
+```
+
+
+
+```json
+curl --header "Content-Type: application/json"   --request POST   --data '
+{
+"_id": "5f36847ac195840004d06be6",
+"Body": {
+"stkCallback": {
+"MerchantRequestID": "26201-49702325-1",
+"CheckoutRequestID": "ws_CO_140820201532442074",
+"ResultCode": 1,
+"ResultDesc": "The balance is insufficient for the transaction"
+}
+}
+}' http://localhost:3000/stkcall
+
+```
+
+
+
+
+
 
 ->User sends form progress if all is well 
 send back a 201 response indicating

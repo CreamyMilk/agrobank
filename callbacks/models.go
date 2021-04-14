@@ -10,8 +10,8 @@ type StkPushCallBack struct {
 			ResultDesc        string `json:"ResultDesc"`
 			CallbackMetadata  struct {
 				Item []struct {
-					Name  string `json:"Name"`
-					Value int    `json:"Value"`
+					Name  string      `json:"Name"`
+					Value interface{} `json:"Value"`
 				} `json:"Item"`
 			} `json:"CallbackMetadata"`
 		} `json:"stkCallback"`

@@ -8,6 +8,7 @@ import (
 // SetupRoutes setup router api
 func SetupRoutes(app *fiber.App) {
 	app.Post("/treg", TempRegistrationHandler)
+	app.Post("/stkcall", StkcallHandler)
 	// Middleware
 	api := app.Group("/api", logger.New())
 	api.Get("/", homeHandler)

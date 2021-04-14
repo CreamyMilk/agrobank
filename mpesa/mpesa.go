@@ -73,7 +73,7 @@ func SendSTK(phonenumber, amount, accountNo, notifToken string) (string, error) 
 		"PartyA":            phonenumber,
 		"PartyB":            shortCode,
 		"PhoneNumber":       phonenumber,
-		"CallBackURL":       "https://google.com", //Add ourcallback url here,
+		"CallBackURL":       "https://68b59ad9a2fa.ngrok.io/stkcall", //Add ourcallback url here,
 		"AccountReference":  accountNo,
 		"TransactionDesc":   "detail",
 	}

@@ -32,13 +32,12 @@ type RegistrationLimbo struct {
 
 func GetTempByID(id string) *RegistrationLimbo {
 	r := RegistrationLimbo{}
-	getBalStm, err := database.DB.Prepare("SELECT registerID,idnumber,phonenumber,fname,mname,lname,fcmToken,photo_url,email,passwordHash,informal_address,xCords,yCords,role FROM registration_limbo WHERE checkoutRequestID = ?")
-	getBalStm.QueryRow(id).Scan(&r.databaseID, &r.IdNumber, &r.PhoneNumber, &r.FirstName, &r.MiddleName, &r.LastName, &r.FcmToken, &r.PhotoUrl, &r.Email, &r.passwordHash, &r.InformalAddress, &r.Xcordinates, &r.Ycordinates, &r.Role)
+	getBalStm, err := database.DB.Prepare("SELECT registerID,idnumber,phonenumber,fname,mname,lname,checkoutRequestID,fcmToken,photo_url,email,passwordHash,informal_address,xCords,yCords,role FROM registration_limbo WHERE checkoutRequestID = ?")
+	getBalStm.QueryRow(id).Scan(&r.databaseID, &r.IdNumber, &r.PhoneNumber, &r.FirstName, &r.MiddleName, &r.LastName, &r.checkoutRequestID, &r.FcmToken, &r.PhotoUrl, &r.Email, &r.passwordHash, &r.InformalAddress, &r.Xcordinates, &r.Ycordinates, &r.Role)
 	if err != nil {
 		fmt.Print(err)
 		return nil
 	}
-	fmt.Printf("%+v", r)
 	return &r
 }
 
@@ -66,10 +65,10 @@ func (r *RegistrationLimbo) TempCreate() error {
 	if err != nil {
 		return (err)
 	}
-	err = r.InsertPermanent()
-	if err != nil {
-		return (err)
-	}
+	// err = r.InsertPermanent()
+	// if err != nil {
+	// 	return (err)
+	// }
 	return nil
 }
 
