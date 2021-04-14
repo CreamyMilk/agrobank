@@ -9,10 +9,13 @@ User will be able to iniate STK PUSH and change the number in order to facilitat
 ```json
 curl --header "Content-Type: application/json"   --request POST   --data '
     {
-"name"        :"Peter",    
+"fname"       :"Peter",    
+"mname"       :"Mid",
+"lname"       :"LastName",
 "idnumber"    :"38994566",  
 "photourl"    :"https://google.com",
-"phone"       :"0797678252", 
+"phone"       :"254797678252", 
+"password"    :"PassWordSuperSecure",
 "email"       :"me@gmail.com", 
 "fcmtoken"    :"FCMTOKENSAMPLE", 
 "informaladdress":"bomasout", 

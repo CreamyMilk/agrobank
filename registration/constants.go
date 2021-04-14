@@ -1,3 +1,3 @@
 package registration
 
-const REGISTRATIONCOST = 100
+const REGISTRATIONCOST = 1
