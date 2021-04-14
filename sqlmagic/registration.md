@@ -20,7 +20,7 @@ curl --header "Content-Type: application/json"   --request POST   --data '
 "fcmtoken"    :"FCMTOKENSAMPLE", 
 "informaladdress":"bomasout", 
 "xcords"      :"2.000023", 
-"ycords"      :"5.000010", 
+"ycords"      :"5.000010",  
 "role"        :"Logistics"
 }' http://localhost:3000/treg
 
@@ -38,7 +38,7 @@ curl --header "Content-Type: application/json"   --request POST   --data '{
 "Body": {
 "stkCallback": {
 "MerchantRequestID": "28288-21648703-1",
-"CheckoutRequestID": "ws_CO_140420211216377239",
+"CheckoutRequestID": "ws_CO_140420212022347183",
 "ResultCode": 0,
 "ResultDesc": "The service request is processed successfully.",
 "CallbackMetadata": {
@@ -125,6 +125,14 @@ login payload
 - Most recent notifications (Limit to 10)
 - Users Orders (No Limit always show all)
 - Users transactions (Limit to 10) -> Load More where necessary (infinte list)
+
+```json
+curl --header "Content-Type: application/json" --request POST --data '{
+"phonenumber"       :"254797678252", 
+"password"          :"PassWordSuperSecure"
+}' http://localhost:3000/login
+
+```
 
 and initate heart beats or establish a web socket connection for realtime updates
 MESSAGE_PAYLOAD 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/CreamyMilk/agrobank/database"
 	"github.com/CreamyMilk/agrobank/mpesa"
+	"github.com/CreamyMilk/agrobank/wallet"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -42,7 +43,9 @@ func GetTempByID(id string) *RegistrationLimbo {
 }
 
 func (r *RegistrationLimbo) IsRegisterd() bool {
-	return false
+	id := 0
+	database.DB.QueryRow("SELECT userid FROM user_registration WHERE phonenumber=?", r.PhoneNumber).Scan(&id)
+	return id != 0
 }
 
 func (r *RegistrationLimbo) TempCreate() error {
@@ -54,21 +57,18 @@ func (r *RegistrationLimbo) TempCreate() error {
 	values := []interface{}{r.IdNumber, r.PhoneNumber, r.FirstName, r.MiddleName, r.LastName, r.FcmToken, "", r.PhotoUrl, r.Email, r.passwordHash, r.InformalAddress, r.Xcordinates, r.Ycordinates, r.Role}
 	res, err := database.DB.Exec("INSERT registration_limbo (idnumber,phonenumber,fname,mname,lname,fcmToken,checkoutRequestID,photo_url,email,passwordHash,informal_address,xCords,yCords,role) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", values...)
 	if err != nil {
-		return (err)
+		return errors.New("")
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
-		return (err)
+		return errors.New("")
 	}
 	r.databaseID = id
 	err = r.sendPayment()
 	if err != nil {
-		return (err)
+		return errors.New("")
 	}
-	// err = r.InsertPermanent()
-	// if err != nil {
-	// 	return (err)
-	// }
+
 	return nil
 }
 
@@ -77,6 +77,11 @@ func (r *RegistrationLimbo) InsertPermanent() error {
 	_, err := database.DB.Exec("INSERT user_registration (idnumber,phonenumber,fname,mname,lname,checkoutRequestID,photo_url,email,passwordHash,informal_address,xCords,yCords,role) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", values...)
 	if err != nil {
 		return (err)
+	}
+	w := wallet.MakeWallet(r.PhoneNumber, INITALWALLETDEPOSIT)
+	err = w.Create()
+	if err != nil {
+		return err
 	}
 	return nil
 }

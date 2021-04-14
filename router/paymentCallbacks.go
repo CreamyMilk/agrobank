@@ -3,13 +3,30 @@ package router
 import (
 	"fmt"
 
-	"github.com/CreamyMilk/agrobank/callbacks"
 	"github.com/CreamyMilk/agrobank/registration"
 	"github.com/gofiber/fiber/v2"
 )
 
+type StkPushCallBack struct {
+	ID   string `json:"_id"`
+	Body struct {
+		StkCallback struct {
+			MerchantRequestID string `json:"MerchantRequestID"`
+			CheckoutRequestID string `json:"CheckoutRequestID"`
+			ResultCode        int    `json:"ResultCode"`
+			ResultDesc        string `json:"ResultDesc"`
+			CallbackMetadata  struct {
+				Item []struct {
+					Name  string      `json:"Name"`
+					Value interface{} `json:"Value"`
+				} `json:"Item"`
+			} `json:"CallbackMetadata"`
+		} `json:"stkCallback"`
+	} `json:"Body"`
+}
+
 func StkcallHandler(c *fiber.Ctx) error {
-	r := new(callbacks.StkPushCallBack)
+	r := new(StkPushCallBack)
 
 	if err := c.BodyParser(r); err != nil {
 		return c.JSON(&fiber.Map{

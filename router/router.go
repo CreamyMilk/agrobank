@@ -7,10 +7,12 @@ import (
 
 // SetupRoutes setup router api
 func SetupRoutes(app *fiber.App) {
+	app.Use(logger.New())
 	app.Post("/treg", TempRegistrationHandler)
 	app.Post("/stkcall", StkcallHandler)
+	app.Post("/login", LoginHandler)
 	// Middleware
-	api := app.Group("/api", logger.New())
+	api := app.Group("/api")
 	api.Get("/", homeHandler)
 	app.Get("/imageupload", photoUploadHandler)
 	app.Use(func(c *fiber.Ctx) error {

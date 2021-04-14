@@ -62,8 +62,7 @@ func SendSTK(phonenumber, amount, accountNo, notifToken string) (string, error) 
 	sendSTKUrl := baseMpesaURL + "/mpesa/stkpush/v1/processrequest"
 	transType := "CustomerPayBillOnline"
 	password, timestamp := generatePasswordAndTimeStamp(shortCode, passKey)
-	token := getToken()
-	fmt.Println(token)
+	//fmt.Println(token)
 	jsonData := map[string]string{
 		"BusinessShortCode": shortCode,
 		"Password":          password,
@@ -79,18 +78,18 @@ func SendSTK(phonenumber, amount, accountNo, notifToken string) (string, error) 
 	}
 	// fmt.Print(jsonData)
 	jsonValue, _ := json.Marshal(jsonData)
-	fmt.Println(jsonData)
+	//fmt.Println(jsonData)
 	request, _ := http.NewRequest("POST", sendSTKUrl, bytes.NewBuffer(jsonValue))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", "Bearer "+getToken())
 	request.Header.Set("cache-control", "no-cache")
-	fmt.Printf("%v", request)
+	//fmt.Printf("%v", request)
 	client := &http.Client{}
 	response, _ := client.Do(request)
 	body, _ := ioutil.ReadAll(response.Body)
 	var tempSTK map[string]string
 	json.Unmarshal([]byte(body), &tempSTK)
-	fmt.Printf("%v", tempSTK)
+	//fmt.Printf("%v", tempSTK)
 	if tempSTK["ResponseCode"] == "0" {
 		transaction.CheckoutID = string(tempSTK["CheckoutRequestID"])
 		transaction.MerchID = string(tempSTK["MerchantRequestID"])
