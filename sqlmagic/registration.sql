@@ -16,7 +16,7 @@ CREATE TABLE user_registration (
     photo_url         VARCHAR(100),
     phonenumber       VARCHAR(12) UNIQUE,
     email             VARCHAR(100),
-    passwordHash      VARCHAR(60),
+    passwordHash      VARCHAR(65),
     informal_address  VARCHAR(100),
     xCords            VARCHAR(100),
     yCords            VARCHAR(100),
@@ -38,7 +38,7 @@ CREATE TABLE registration_limbo (
     checkoutRequestID       VARCHAR(100),
     photo_url       VARCHAR(100),
     email           VARCHAR(1000),
-    passwordHash    VARCHAR(60) DEFAULT "0x",
+    passwordHash    VARCHAR(65) DEFAULT "0x",
     informal_address VARCHAR(1000),
     xCords          VARCHAR(100),
     yCords          VARCHAR(100),
@@ -47,8 +47,8 @@ CREATE TABLE registration_limbo (
     PRIMARY KEY(registerID)
 );
 
-INSERT registration_limbo (idnumber,phonenumber,fname,mname,lname,fcmToken,checkoutRequestID,photo_url,email,passwordHash,informal_address,xCords,yCords,role) VALUES
-("144433434","0788787878","F","M","L","eg32","","https://pic","0xasdasd","cool@example.com","kiambu south","10.00","10.00","Farmer");
+INSERT registration_limbo (idnumber,phonenumber,fname,mname,lname,fcmToken,checkoutRequestID,photo_url,passwordHash,email,informal_address,xCords,yCords,role) VALUES
+("144433434","254797678251","F","M","L","eg32","PPPZ","https://pic","$2a$04$xLHL53ke/GFU.LsG/1KOUOOy8zjWNYvyzSGM0vkoM0kKx.SDcpKtm","cool@example.com","kiambu south","10.00","10.00","Farmer");
 
 
 SELECT registerID,phonenumber,checkoutRequestID,passwordHash,role FROM registration_limbo;

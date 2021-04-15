@@ -89,7 +89,7 @@ func SendSTK(phonenumber, amount, accountNo, notifToken string) (string, error) 
 	body, _ := ioutil.ReadAll(response.Body)
 	var tempSTK map[string]string
 	json.Unmarshal([]byte(body), &tempSTK)
-	//fmt.Printf("%v", tempSTK)
+	fmt.Printf("%v", tempSTK)
 	if tempSTK["ResponseCode"] == "0" {
 		transaction.CheckoutID = string(tempSTK["CheckoutRequestID"])
 		transaction.MerchID = string(tempSTK["MerchantRequestID"])

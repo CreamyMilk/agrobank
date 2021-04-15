@@ -38,7 +38,7 @@ curl --header "Content-Type: application/json"   --request POST   --data '{
 "Body": {
 "stkCallback": {
 "MerchantRequestID": "28288-21648703-1",
-"CheckoutRequestID": "ws_CO_140420212022347183",
+"CheckoutRequestID": "PPP",
 "ResultCode": 0,
 "ResultDesc": "The service request is processed successfully.",
 "CallbackMetadata": {
@@ -88,6 +88,13 @@ curl --header "Content-Type: application/json"   --request POST   --data '
 
 
 
+
+```json
+curl --header "Content-Type: application/json"   --request POST   --data '
+    {
+"phonenumber"       :"254797678252", 
+"password"    :"PassWordSuperSecure"
+}' http://localhost:3000/login
 
 
 

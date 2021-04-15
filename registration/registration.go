@@ -57,16 +57,16 @@ func (r *RegistrationLimbo) TempCreate() error {
 	values := []interface{}{r.IdNumber, r.PhoneNumber, r.FirstName, r.MiddleName, r.LastName, r.FcmToken, "", r.PhotoUrl, r.Email, r.passwordHash, r.InformalAddress, r.Xcordinates, r.Ycordinates, r.Role}
 	res, err := database.DB.Exec("INSERT registration_limbo (idnumber,phonenumber,fname,mname,lname,fcmToken,checkoutRequestID,photo_url,email,passwordHash,informal_address,xCords,yCords,role) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", values...)
 	if err != nil {
-		return errors.New("")
+		return errors.New("400")
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
-		return errors.New("")
+		return errors.New("402")
 	}
 	r.databaseID = id
 	err = r.sendPayment()
 	if err != nil {
-		return errors.New("")
+		return errors.New("300")
 	}
 
 	return nil
