@@ -16,6 +16,15 @@ type Wallet struct {
 	balance int64 //Range: +/- 9,223,372,036,854,775,807. nine quantillion
 }
 
+func GetWalletByName(name string) *Wallet {
+	tempWall := new(Wallet)
+	err := database.DB.QueryRow("SELECT wallet_name,balance FROM wallets_store WHERE wallet_name=? ", name).Scan(&tempWall.name, &tempWall.balance)
+	if err != nil {
+		return nil
+	}
+	return tempWall
+}
+
 func MakeWallet(name string, amount int64) Wallet {
 	return Wallet{name: name, balance: amount}
 }
@@ -118,6 +127,7 @@ func (w *Wallet) SendMoney(amountToSend int64, recipientW Wallet) (string, bool)
 	}
 	//You cannot send to self
 	if w.name == recipientW.name {
+		errorMessage = "Cannot send funds to self"
 		tx.Rollback()
 		return errorMessage, false
 	}

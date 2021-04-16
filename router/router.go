@@ -11,7 +11,12 @@ func SetupRoutes(app *fiber.App) {
 	app.Post("/treg", TempRegistrationHandler)
 	app.Post("/stkcall", StkcallHandler)
 	app.Post("/login", LoginHandler)
-	// Middleware
+
+	wallet := app.Group("/wallet")
+	wallet.Post("/deposit", depositCashHandler)
+	wallet.Post("/sendmoney", sendMoneyHandler)
+	wallet.Post("/balance", getBalanceHandler)
+
 	api := app.Group("/api")
 	api.Get("/", homeHandler)
 	app.Get("/imageupload", photoUploadHandler)
