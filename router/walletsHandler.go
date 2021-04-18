@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 
+	"github.com/CreamyMilk/agrobank/login"
 	"github.com/CreamyMilk/agrobank/mpesa"
 	"github.com/CreamyMilk/agrobank/wallet"
 	"github.com/gofiber/fiber/v2"
@@ -19,6 +20,19 @@ type sendMoneyrequest struct {
 	SenderWalletName     string `json:"from"`
 	ReceipientWalletName string `json:"to"`
 	Amount               int64  `json:"amount"`
+}
+
+type verifyTransactionRequest struct {
+	Phone  string `json:"phonenumber"`
+	Amount int64  `json:"amount"`
+}
+
+//number,amount} =>  get Rates, calculate NewBalance, USERNAME
+type verificationResponse struct {
+	Rates      int64  `json:"rates"`
+	StatusCode int    `json:"status"`
+	Username   string `json:"username"`
+	Message    string `json:"message"`
 }
 
 type getBalanceRequest struct {
@@ -60,6 +74,35 @@ func depositCashHandler(c *fiber.Ctx) error {
 	})
 }
 
+//Used to verify transactions halfway
+func verifyTransactionHandler(c *fiber.Ctx) error {
+	req := new(verifyTransactionRequest)
+	res := new(verificationResponse)
+	if err := c.BodyParser(req); err != nil {
+		res.StatusCode = -1
+		res.Message = "request is malformed"
+		return c.JSON(res)
+	}
+	rates, err := wallet.GetTransactionPrice(req.Amount)
+	res.Rates = rates
+	if err != nil {
+		res.StatusCode = -2
+		res.Message = "Could not retrive the rates for the stated transaction"
+		return c.JSON(res)
+	}
+	identity, err := login.GetPersonByWalletName(req.Phone)
+
+	if err != nil {
+		res.StatusCode = -19
+		res.Message = "User is not registered yet"
+		return c.JSON(res)
+	}
+	res.StatusCode = 0
+	res.Username = identity
+	res.Message = "Successful"
+	return c.JSON(res)
+}
+
 func sendMoneyHandler(c *fiber.Ctx) error {
 	req := new(sendMoneyrequest)
 
@@ -70,6 +113,7 @@ func sendMoneyHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	fmt.Printf("%+v", req)
 	fromWallet := wallet.GetWalletByName(req.SenderWalletName)
 	if fromWallet == nil {
 		return c.JSON(&fiber.Map{
@@ -94,8 +138,9 @@ func sendMoneyHandler(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(&fiber.Map{
-		"status": 0,
-		"messge": "Succesfully SentMoney",
+		"status":     0,
+		"newbalance": fromWallet.GetBalance(),
+		"messge":     "Succesfully SentMoney",
 	})
 }
 

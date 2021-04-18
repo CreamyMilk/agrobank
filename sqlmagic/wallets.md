@@ -29,3 +29,15 @@ curl --header "Content-Type: application/json"   --request POST   --data '
 }' http://localhost:3000/wallet/balance
 
 ```
+
+## Verify receiver
+
+```json
+curl --header "Content-Type: application/json"   --request POST   --data '
+{
+"phonenumber"     : "254797678251",
+"amount"          : 10000
+}' http://localhost:3000/wallet/verify
+
+```
+

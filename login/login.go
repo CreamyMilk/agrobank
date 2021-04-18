@@ -18,7 +18,7 @@ type UserDetails struct {
 	Name          string `json:"fullname"`
 	Phonenumber   string `json:"phonenumber"`
 	Walletname    string `json:"walletname"`
-	WalletBalance string `json:"balance"`
+	WalletBalance int64  `json:"balance"`
 	Role          string `json:"role"`
 	Status        int    `json:"status"`
 	fname         string
@@ -34,9 +34,20 @@ func (l LoginDetails) AttemptLogin() (*UserDetails, error) {
 		return nil, errors.New("username or password seems to be invalid")
 	}
 	u := new(UserDetails)
-	database.DB.QueryRow("SELECT fname,mname,lname,phonenumber,role FROM user_registration WHERE phonenumber=?", l.Phonenumber).Scan(&u.fname, &u.mname, &u.lname, &u.Phonenumber, &u.Role)
-	database.DB.QueryRow("SELECT wallet_name,balance FROM wallets_store WHERE wallet_name=?", l.Phonenumber).Scan(&u.Walletname, &u.WalletBalance)
+	database.DB.QueryRow("SELECT fname,mname,lname,phonenumber,role FROM user_registration WHERE phonenumber=? LIMIT 1", l.Phonenumber).Scan(&u.fname, &u.mname, &u.lname, &u.Phonenumber, &u.Role)
+	database.DB.QueryRow("SELECT wallet_name,balance FROM wallets_store WHERE wallet_name=? LIMIT 1", l.Phonenumber).Scan(&u.Walletname, &u.WalletBalance)
 	u.Name = fmt.Sprintf("%s %s %s", u.fname, u.mname, u.lname)
 	u.Status = 0
 	return u, nil
+}
+
+//TODO: rethink implementation to use foreign keys for the wallets and user accounts
+func GetPersonByWalletName(providedname string) (string, error) {
+	u := new(UserDetails)
+	err := database.DB.QueryRow("SELECT fname,mname,lname FROM user_registration WHERE phonenumber=? LIMIT 1", providedname).Scan(&u.fname, &u.mname, &u.lname)
+	if err != nil {
+		return "", err
+	}
+	u.Name = fmt.Sprintf("%s %s %s", u.fname, u.mname, u.lname)
+	return u.Name, nil
 }

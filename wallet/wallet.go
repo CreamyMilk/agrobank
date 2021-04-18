@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -27,6 +28,15 @@ func GetWalletByName(name string) *Wallet {
 
 func MakeWallet(name string, amount int64) Wallet {
 	return Wallet{name: name, balance: amount}
+}
+
+func GetTransactionPrice(amount int64) (int64, error) {
+	transactionCost := 0
+	err := database.DB.QueryRow("SELECT cost FROM transaction_costs WHERE upper_limit >= ? LIMIT 1", amount).Scan(&transactionCost)
+	if err != nil {
+		return 0, errors.New("transaction cost coult not be determined")
+	}
+	return int64(transactionCost), nil
 }
 
 //Create Adds New wallet into db
