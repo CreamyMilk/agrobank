@@ -29,15 +29,23 @@ CREATE TABLE transactions_list(
     amount          BIGINT,
     charge          BIGINT,
     ttype           INT,
-    craetedAt       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    createdAt       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY     (tid)
 );
 
+CREATE TABLE notification_table(
+    nid         INT NOT NULL AUTO_INCREMENT,
+    userid      INT,
+    wallet_name INT
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+)
 
-INSERT INTO transaction_type (type,name) VALUES (0, "Deposit");
-INSERT INTO transaction_type (type,name) VALUES (1, "Withdraw");
-INSERT INTO transaction_type (type,name) VALUES (2, "SendMoney");
-INSERT INTO transaction_type (type,name) VALUES (3, "SendToMpesa");
+
+INSERT INTO transactions_type (type,name) VALUES (0, "Deposit");
+INSERT INTO transactions_type (type,name) VALUES (1, "Withdraw");
+INSERT INTO transactions_type (type,name) VALUES (2, "SendMoney");
+INSERT INTO transactions_type (type,name) VALUES (3, "SendToMpesa");
 
 INSERT INTO transaction_costs (upper_limit,cost) VALUES (100,1);
 INSERT INTO transaction_costs (upper_limit,cost) VALUES (1000,5);

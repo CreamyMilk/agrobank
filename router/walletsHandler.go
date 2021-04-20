@@ -1,8 +1,6 @@
 package router
 
 import (
-	"fmt"
-
 	"github.com/CreamyMilk/agrobank/login"
 	"github.com/CreamyMilk/agrobank/mpesa"
 	"github.com/CreamyMilk/agrobank/wallet"
@@ -39,12 +37,16 @@ type getBalanceRequest struct {
 	WalletName string `json:"walletname"`
 }
 
+type getTransactionsRequest struct {
+	WalletName string `json:"walletname"`
+}
+
 func depositCashHandler(c *fiber.Ctx) error {
 
 	req := new(depositRequest)
 
 	if err := c.BodyParser(req); err != nil {
-		fmt.Printf("%+v", err)
+		//fmt.Printf("%+v", err)
 		return c.JSON(&fiber.Map{
 			"status":  -1,
 			"message": "request is malformed",
@@ -113,7 +115,7 @@ func sendMoneyHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	fmt.Printf("%+v", req)
+	//fmt.Printf("%+v", req)
 	fromWallet := wallet.GetWalletByName(req.SenderWalletName)
 	if fromWallet == nil {
 		return c.JSON(&fiber.Map{
@@ -167,4 +169,30 @@ func getBalanceHandler(c *fiber.Ctx) error {
 		"status":  0,
 		"balance": currentBalance,
 	})
+}
+
+func getTransactionsHandler(c *fiber.Ctx) error {
+	req := new(getTransactionsRequest)
+	if err := c.BodyParser(req); err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -3,
+			"message": "Malformed request",
+		})
+	}
+	w := wallet.GetWalletByName(req.WalletName)
+	if w == nil {
+		return c.JSON(&fiber.Map{
+			"status":  -19,
+			"message": "Sadly De wallet fake",
+		})
+	}
+	transacations, err := w.GetTransactions()
+
+	if err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -1,
+			"message": err.Error(),
+		})
+	}
+	return c.JSON(transacations)
 }

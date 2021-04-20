@@ -41,3 +41,14 @@ curl --header "Content-Type: application/json"   --request POST   --data '
 
 ```
 
+
+## Get Transactions
+
+```json
+curl --header "Content-Type: application/json"   --request POST   --data '
+{
+"walletname"     : "254797678251"
+}' http://localhost:3000/wallet/transactions
+
+```
+

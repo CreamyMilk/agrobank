@@ -13,10 +13,12 @@ func SetupRoutes(app *fiber.App) {
 	app.Post("/login", LoginHandler)
 
 	wallet := app.Group("/wallet")
+
 	wallet.Post("/deposit", depositCashHandler)
 	wallet.Post("/sendmoney", sendMoneyHandler)
 	wallet.Post("/balance", getBalanceHandler)
 	wallet.Post("/verify", verifyTransactionHandler)
+	wallet.Post("/transactions", getTransactionsHandler)
 
 	api := app.Group("/api")
 	api.Get("/", homeHandler)

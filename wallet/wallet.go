@@ -17,6 +17,22 @@ type Wallet struct {
 	balance int64 //Range: +/- 9,223,372,036,854,775,807. nine quantillion
 }
 
+type Transaction struct {
+	TransactionID string `json:"transactionid"`
+	From          string `json:"from"`
+	To            string `json:"to"`
+	Amount        int64  `json:"amount"`
+	Charge        int64  `json:"charge"`
+	TypeID        int    `json:"typeid"`
+	TypeName      string `json:"typename"`
+	Timestamp     int64  `json:"timestamp"`
+}
+
+type Transactions struct {
+	Transactions []Transaction `json:"transactions"`
+	StatusCode   int           `json:"status"`
+}
+
 func GetWalletByName(name string) *Wallet {
 	tempWall := new(Wallet)
 	err := database.DB.QueryRow("SELECT wallet_name,balance FROM wallets_store WHERE wallet_name=? ", name).Scan(&tempWall.name, &tempWall.balance)
@@ -72,6 +88,50 @@ func (w *Wallet) GetBalance() int64 {
 	}
 	w.balance = int64(tempBalance)
 	return w.balance
+}
+
+func (w *Wallet) GetTransactions() (*Transactions, error) {
+	result := new(Transactions)
+	rows, err := database.DB.Query(`
+	SELECT transuuid,sender_name,receiver_name,amount,charge,ttype,transactions_type.name as transactionName,
+	UNIX_TIMESTAMP(craetedAt) as timestamp
+	FROM transactions_list 
+	LEFT JOIN transactions_type
+	ON transactions_list.ttype = transactions_type.type
+	WHERE sender_name=?
+	OR    receiver_name=? 
+  ORDER BY timestamp DESC LIMIT 20`, w.name, w.name)
+
+	if err != nil {
+		result.StatusCode = -500
+		return result, err
+	}
+
+	for rows.Next() {
+		singleTransaction := Transaction{}
+		if err := rows.Scan(
+			&singleTransaction.TransactionID,
+			&singleTransaction.From,
+			&singleTransaction.To,
+			&singleTransaction.Amount,
+			&singleTransaction.Charge,
+			&singleTransaction.TypeID,
+			&singleTransaction.TypeName,
+			&singleTransaction.Timestamp); err != nil {
+			result.StatusCode = -501
+			return result, err
+		}
+		result.Transactions = append(result.Transactions, singleTransaction)
+	}
+	if err != nil {
+		result.StatusCode = -502
+		return result, err
+	}
+	if result.Transactions == nil {
+		result.StatusCode = -503
+	}
+	defer rows.Close()
+	return result, nil
 }
 
 //Withdraw Initiates a withdrawal event
