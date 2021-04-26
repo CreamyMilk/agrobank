@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/CreamyMilk/agrobank/database"
+	"github.com/CreamyMilk/agrobank/notification"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -100,7 +101,7 @@ func (w *Wallet) GetTransactions() (*Transactions, error) {
 	ON transactions_list.ttype = transactions_type.type
 	WHERE sender_name=?
 	OR    receiver_name=? 
-  ORDER BY timestamp DESC LIMIT 20`, w.name, w.name)
+  	ORDER BY timestamp DESC LIMIT 15`, w.name, w.name)
 
 	if err != nil {
 		result.StatusCode = -500
@@ -266,7 +267,17 @@ func (w *Wallet) SendMoney(amountToSend int64, recipientW Wallet) (string, bool)
 		tx.Rollback()
 		return errorMessage, false
 	}
+	//Applys Changes to the database
 	tx.Commit()
+
+	_, err = notification.SendNotification(w.name, notification.SENDING_MONEY, amountToSend)
+	if err != nil {
+		fmt.Printf("Failed to send notifcation because %v", err)
+	}
+	_, err = notification.SendNotification(recipientW.name, notification.RECEVIEING_MONEY, amountToSend)
+	if err != nil {
+		fmt.Printf("Failed to send notifcation because %v", err)
+	}
 	return "", true
 }
 func MakeTransactionCode() string {

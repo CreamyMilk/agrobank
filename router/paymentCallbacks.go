@@ -39,7 +39,7 @@ func StkcallHandler(c *fiber.Ctx) error {
 		p := registration.GetTempByID(r.Body.StkCallback.CheckoutRequestID)
 		err := p.InsertPermanent()
 		if err != nil {
-			//Someone paid via Mpesa but didnot fill registration forms
+			//Someone paid via Mpesa but did not fill registration forms
 			fmt.Print(err)
 		}
 	}

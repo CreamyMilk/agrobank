@@ -52,3 +52,4 @@ curl --header "Content-Type: application/json"   --request POST   --data '
 
 ```
 
+http localhost:8081/notifytopic topic="." title="Bold Title" extra="Money Added"
