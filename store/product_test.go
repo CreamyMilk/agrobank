@@ -15,6 +15,7 @@ func TestAddProduct(t *testing.T) {
 
 	tt := []struct {
 		categoryID        int64
+		ownerID           int64
 		productName       string
 		productImage      string
 		productImageLarge string
@@ -24,10 +25,10 @@ func TestAddProduct(t *testing.T) {
 		price             float64
 		possible          bool
 	}{
-		{1, "Carrots", "http://peodIMage", "largeImage", "descrtiption", "box", 60, 12.2, true},
-		{1, "Maize", "http://peodIMage", "largeImage", "descrtiption", "box", 60, 12.2, true},
-		{1, "Beans", "http://peodIMage", "largeImage", "descrtiption", "box", 60, 12.2, true},
-		{2, "Unknown Category", "http://peodIMage", "largeImage", "descrtiption", "box", 60, 12.2, false},
+		{1, 1, "Carrots", "http://peodIMage", "largeImage", "descrtiption", "box", 60, 12.2, true},
+		{1, 99, "Unkown Owner", "http://peodIMage", "largeImage", "descrtiption", "box", 60, 12.2, false},
+		{1, 1, "Beans", "http://peodIMage", "largeImage", "descrtiption", "box", 60, 12.2, true},
+		{2, 1, "Unknown Category", "http://peodIMage", "largeImage", "descrtiption", "box", 60, 12.2, false},
 	}
 
 	for _, tc := range tt {

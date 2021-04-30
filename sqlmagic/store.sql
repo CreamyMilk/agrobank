@@ -9,6 +9,7 @@ CREATE TABLE categories (
 CREATE TABLE products (
     product_id          INT NOT NULL AUTO_INCREMENT,
     category_id         INT NOT NULL,
+    owner_id            INT NOT NULL,
     product_name        VARCHAR(100),
     product_image       VARCHAR(100),
     product_image_large VARCHAR(100),
@@ -27,15 +28,16 @@ VALUES ("FoodStaff","https://foods.com");
 
 
 INSERT INTO products (
-category_id,product_name,product_image,product_image_large,
+category_id,owner_id,product_name,product_image,product_image_large,
 descriptions,price,stock,product_packtype )
-VALUES (1,"Carrots","https://carotsimage.com","nolarge",
+VALUES (1,1,"Carrots","https://carotsimage.com","nolarge",
 "Carrots are good for your eyes",100,5,"Boxes");
 
 
 
 UPDATE products
 SET category_id=1,
+    owner_id = 1,
     product_name="A new Name",
     product_image="image",
     product_image_large="Large Image",

@@ -9,6 +9,7 @@ import (
 type Product struct {
 	ProductID         int64   `json:"productID"`
 	CategoryID        int64   `json:"categoryID"`
+	OwnerID           int64   `json:"ownerID"`
 	ProductName       string  `json:"productname"`
 	ProductImage      string  `json:"image"`
 	ProductImageLarge string  `json:"imagelarge"`
@@ -21,8 +22,8 @@ type Product struct {
 func (p *Product) AddProduct() error {
 	res, err := database.DB.Exec(`
 	INSERT INTO products 
-	(category_id,product_name,product_image,product_image_large,descriptions,price,stock,product_packtype)
-	VALUES (?,?,?,?,?,?,?,?)`, p.CategoryID, p.ProductName, p.ProductImage,
+	(category_id,owner_id,product_name,product_image,product_image_large,descriptions,price,stock,product_packtype)
+	VALUES (?,?,?,?,?,?,?,?,?)`, p.CategoryID, p.OwnerID, p.ProductName, p.ProductImage,
 		p.ProductImageLarge, p.Description, p.Price, p.Stock, p.PackingType)
 	if err != nil {
 		return err
@@ -37,6 +38,7 @@ func (p *Product) AddProduct() error {
 func (p *Product) UpdateProduct() error {
 	res, err := database.DB.Exec(`UPDATE products SET 
 	category_id=?,
+	owner_id=?,
     product_name=?,
     product_image=?,
     product_image_large=?,
@@ -44,7 +46,7 @@ func (p *Product) UpdateProduct() error {
     price=?,
     stock=?,
     product_packtype=?
-	WHERE product_id=?;`, p.CategoryID, p.ProductName, p.ProductImage,
+	WHERE product_id=?;`, p.CategoryID, p.OwnerID, p.ProductName, p.ProductImage,
 		p.ProductImageLarge, p.Description, p.Price, p.Stock, p.PackingType, p.ProductID)
 	if err != nil {
 		return err
