@@ -93,7 +93,7 @@ curl --header "Content-Type: application/json"   --request POST   --data '
 curl --header "Content-Type: application/json"   --request POST   --data '
     {
 "phonenumber"       :"254797678252", 
-"password"    :"PassWordSuperSecure"
+"password"    :"0000"
 }' http://localhost:3000/login
 
 

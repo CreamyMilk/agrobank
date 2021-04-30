@@ -5,6 +5,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+type getOwnersProductsRequest struct {
+	OwnerID int64 `json:"ownerid"`
+}
+
 func addProductHandler(c *fiber.Ctx) error {
 	tempProduct := new(store.Product)
 
@@ -48,5 +52,23 @@ func upadateProductHandler(c *fiber.Ctx) error {
 		"status":  0,
 		"message": "Updated Product succesfully",
 	})
+}
 
+func getAllProductsHandler(c *fiber.Ctx) error {
+	req := new(getOwnersProductsRequest)
+	if err := c.BodyParser(req); err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -3,
+			"message": "Malformed request",
+		})
+	}
+	products, err := store.GetProductsByOwnerID(req.OwnerID)
+
+	if err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -1,
+			"message": err.Error(),
+		})
+	}
+	return c.JSON(products)
 }

@@ -15,6 +15,7 @@ type LoginDetails struct {
 }
 
 type UserDetails struct {
+	UserID        int64  `json:"userid"`
 	Name          string `json:"fullname"`
 	Phonenumber   string `json:"phonenumber"`
 	Walletname    string `json:"walletname"`
@@ -29,12 +30,11 @@ type UserDetails struct {
 func (l LoginDetails) AttemptLogin() (*UserDetails, error) {
 	database.DB.QueryRow("SELECT passwordHash FROM user_registration WHERE phonenumber=?", l.Phonenumber).Scan(&l.hash)
 	err := bcrypt.CompareHashAndPassword([]byte(l.hash), []byte(l.Password))
-
 	if err != nil {
 		return nil, errors.New("username or password seems to be invalid")
 	}
 	u := new(UserDetails)
-	database.DB.QueryRow("SELECT fname,mname,lname,phonenumber,role FROM user_registration WHERE phonenumber=? LIMIT 1", l.Phonenumber).Scan(&u.fname, &u.mname, &u.lname, &u.Phonenumber, &u.Role)
+	database.DB.QueryRow("SELECT userid,fname,mname,lname,phonenumber,role FROM user_registration WHERE phonenumber=? LIMIT 1", l.Phonenumber).Scan(&u.UserID, &u.fname, &u.mname, &u.lname, &u.Phonenumber, &u.Role)
 	database.DB.QueryRow("SELECT wallet_name,balance FROM wallets_store WHERE wallet_name=? LIMIT 1", l.Phonenumber).Scan(&u.Walletname, &u.WalletBalance)
 	u.Name = fmt.Sprintf("%s %s %s", u.fname, u.mname, u.lname)
 	u.Status = 0

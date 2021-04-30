@@ -23,6 +23,7 @@ func SetupRoutes(app *fiber.App) {
 	store := app.Group("/store")
 
 	store.Post("/add", addProductHandler)
+	store.Post("/products", getAllProductsHandler)
 	store.Put("/update", upadateProductHandler)
 
 	api := app.Group("/api")

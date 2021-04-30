@@ -31,3 +31,13 @@ curl --header "Content-Type: application/json"   --request PUT   --data '{
 }' http://localhost:3000/store/update
 
 ```
+
+## Get All Product
+```json
+curl --header "Content-Type: application/json"   --request POST   --data '{
+
+"ownerid"       :  1
+
+}' http://localhost:3000/store/products
+
+```

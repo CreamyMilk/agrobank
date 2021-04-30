@@ -18,6 +18,10 @@ type Product struct {
 	Stock             int     `json:"stock"`
 	Price             float64 `json:"price"`
 }
+type ProductsList struct {
+	Products   []Product `json:"products"`
+	StatusCode int       `json:"status"`
+}
 
 func (p *Product) AddProduct() error {
 	res, err := database.DB.Exec(`
@@ -66,4 +70,49 @@ func (p *Product) DeleteProduct() error {
 		return err
 	}
 	return nil
+}
+func GetProductsByOwnerID(owner_id int64) (*ProductsList, error) {
+	result := new(ProductsList)
+	rows, err := database.DB.Query(`
+	SELECT category_id,
+	product_name,
+	product_image,
+	product_image_large,
+	descriptions,
+	price,stock,
+	product_packtype
+	FROM products WHERE owner_id=?;
+	`, owner_id)
+
+	if err != nil {
+		result.StatusCode = -500
+		return result, err
+	}
+
+	for rows.Next() {
+		singleProduct := Product{}
+		if err := rows.Scan(
+			&singleProduct.CategoryID,
+			&singleProduct.ProductName,
+			&singleProduct.ProductImage,
+			&singleProduct.ProductImageLarge,
+			&singleProduct.Description,
+			&singleProduct.Price,
+			&singleProduct.Stock,
+			&singleProduct.PackingType); err != nil {
+			result.StatusCode = -501
+			return result, err
+		}
+		result.Products = append(result.Products, singleProduct)
+	}
+	if err != nil {
+		result.StatusCode = -502
+		return result, err
+	}
+	if result.Products == nil {
+		result.StatusCode = -503
+		result.Products = []Product{}
+	}
+	defer rows.Close()
+	return result, nil
 }
