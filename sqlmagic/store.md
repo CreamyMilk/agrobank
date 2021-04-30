@@ -1,19 +1,31 @@
-Add product
-features
-Create,
-Update,
-Delete
-Get products
-```sql
-CREATE TABLE products(
-  productID AUTO_INCREMENT
-  sellerID VARCHAR(100)
-  productName VARCHAR(100)
-  quantity INT
-  price INT
-  createdAt DATETIME()
-  updatedAt DATETIME()
-)
+
+## Add Product
+```json
+curl --header "Content-Type: application/json"   --request POST   --data '{
+"categoryID"    :  1,    
+"productname"   : "pridname", 
+"image"         : "http://image",
+"imagelarge"    : "http://large",
+"description"   : "this descrioption is too long",
+"packingtype"   : "bottles",
+"stock"         :  100,
+"price"         :  2000.34
+}' http://localhost:3000/store/add
 
 ```
 
+## Edit Product
+```json
+curl --header "Content-Type: application/json"   --request PUT   --data '{
+"productID"     :  10,
+"categoryID"    :  1,    
+"productname"   : "newName", 
+"image"         : "http://image",
+"imagelarge"    : "http://large",
+"description"   : "this descrioption is too long",
+"packingtype"   : "bottles",
+"stock"         :  100,
+"price"         :  2000.34
+}' http://localhost:3000/store/update
+
+```

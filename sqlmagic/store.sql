@@ -13,7 +13,7 @@ CREATE TABLE products (
     product_image       VARCHAR(100),
     product_image_large VARCHAR(100),
     descriptions        VARCHAR(500),
-    amount              DECIMAL,
+    price              DECIMAL,
     stock               DECIMAL, 
     product_packtype    VARCHAR(100),
     PRIMARY KEY(product_id),
@@ -28,6 +28,19 @@ VALUES ("FoodStaff","https://foods.com");
 
 INSERT INTO products (
 category_id,product_name,product_image,product_image_large,
-descriptions,amount,stock,product_packtype )
+descriptions,price,stock,product_packtype )
 VALUES (1,"Carrots","https://carotsimage.com","nolarge",
 "Carrots are good for your eyes",100,5,"Boxes");
+
+
+
+UPDATE products
+SET category_id=1,
+    product_name="A new Name",
+    product_image="image",
+    product_image_large="Large Image",
+    descriptions="New Description",
+    price=901.50,
+    stock=12,
+    product_packtype="Boxes More Larger than normal"
+WHERE product_id=99;

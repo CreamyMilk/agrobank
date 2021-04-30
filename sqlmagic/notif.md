@@ -1,13 +1,11 @@
-logging to show us whats going on. The main.go file now looks like this:
-
+The sample implementation for notifying users about looping
+```go
 package main
 
 import (
 	"log"
-	"time"
 )
 
-const iCalDateFormat = "20060102"
 
 var db *pgDb
 
@@ -36,3 +34,4 @@ func main() {
 	log.Println("Starting http server")
 	serveHttp()
 }
+```
