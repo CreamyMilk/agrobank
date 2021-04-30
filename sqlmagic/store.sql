@@ -13,8 +13,8 @@ CREATE TABLE products (
     product_image       VARCHAR(100),
     product_image_large VARCHAR(100),
     descriptions        VARCHAR(500),
-    amount              INT,
-    stock               INT, 
+    amount              DECIMAL,
+    stock               DECIMAL, 
     product_packtype    VARCHAR(100),
     PRIMARY KEY(product_id),
     FOREIGN KEY (category_id) REFERENCES categories(category_id)
