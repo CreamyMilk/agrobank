@@ -9,6 +9,10 @@ type getOwnersProductsRequest struct {
 	OwnerID int64 `json:"ownerid"`
 }
 
+type GetProductsByCategoryIDRequest struct {
+	CategoryID int64 `json:"categoryid"`
+}
+
 func addProductHandler(c *fiber.Ctx) error {
 	tempProduct := new(store.Product)
 
@@ -54,7 +58,7 @@ func upadateProductHandler(c *fiber.Ctx) error {
 	})
 }
 
-func getAllProductsHandler(c *fiber.Ctx) error {
+func getUserStockhandler(c *fiber.Ctx) error {
 	req := new(getOwnersProductsRequest)
 	if err := c.BodyParser(req); err != nil {
 		return c.JSON(&fiber.Map{
@@ -63,6 +67,37 @@ func getAllProductsHandler(c *fiber.Ctx) error {
 		})
 	}
 	products, err := store.GetProductsByOwnerID(req.OwnerID)
+
+	if err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -1,
+			"message": err.Error(),
+		})
+	}
+	return c.JSON(products)
+}
+
+func getAllCategoriesHandler(c *fiber.Ctx) error {
+	categories, err := store.GetCategories()
+
+	if err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -1,
+			"message": err.Error(),
+		})
+	}
+	return c.JSON(categories)
+}
+
+func getAllProductsByCategoryHandler(c *fiber.Ctx) error {
+	req := new(GetProductsByCategoryIDRequest)
+	if err := c.BodyParser(req); err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -3,
+			"message": "Malformed request",
+		})
+	}
+	products, err := store.GetProductsByCategoryID(req.CategoryID)
 
 	if err != nil {
 		return c.JSON(&fiber.Map{

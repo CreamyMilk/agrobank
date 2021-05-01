@@ -23,6 +23,16 @@ type ProductsList struct {
 	StatusCode int       `json:"status"`
 }
 
+type Catergory struct {
+	CatergoryID    int64  `json:"categoryid"`
+	CatergoryName  string `json:"categoryname"`
+	CatergoryImage string `json:"image"`
+}
+type CategoryLists struct {
+	Categories []Catergory `json:"categories"`
+	StatusCode int         `json:"status"`
+}
+
 func (p *Product) AddProduct() error {
 	res, err := database.DB.Exec(`
 	INSERT INTO products 
@@ -74,7 +84,8 @@ func (p *Product) DeleteProduct() error {
 func GetProductsByOwnerID(owner_id int64) (*ProductsList, error) {
 	result := new(ProductsList)
 	rows, err := database.DB.Query(`
-	SELECT category_id,
+	SELECT product_id, 
+  	category_id,
 	product_name,
 	product_image,
 	product_image_large,
@@ -92,6 +103,7 @@ func GetProductsByOwnerID(owner_id int64) (*ProductsList, error) {
 	for rows.Next() {
 		singleProduct := Product{}
 		if err := rows.Scan(
+			&singleProduct.ProductID,
 			&singleProduct.CategoryID,
 			&singleProduct.ProductName,
 			&singleProduct.ProductImage,
@@ -112,6 +124,85 @@ func GetProductsByOwnerID(owner_id int64) (*ProductsList, error) {
 	if result.Products == nil {
 		result.StatusCode = -503
 		result.Products = []Product{}
+	}
+	defer rows.Close()
+	return result, nil
+}
+
+func GetProductsByCategoryID(category_id int64) (*ProductsList, error) {
+	result := new(ProductsList)
+	rows, err := database.DB.Query(`
+	SELECT product_id, 
+	owner_id,
+  	category_id,
+	product_name,
+	product_image,
+	product_image_large,
+	descriptions,
+	price,stock,
+	product_packtype
+	FROM products WHERE category_id=?;
+	`, category_id)
+
+	if err != nil {
+		result.StatusCode = -500
+		return result, err
+	}
+
+	for rows.Next() {
+		singleProduct := Product{}
+		if err := rows.Scan(
+			&singleProduct.ProductID,
+			&singleProduct.OwnerID,
+			&singleProduct.CategoryID,
+			&singleProduct.ProductName,
+			&singleProduct.ProductImage,
+			&singleProduct.ProductImageLarge,
+			&singleProduct.Description,
+			&singleProduct.Price,
+			&singleProduct.Stock,
+			&singleProduct.PackingType); err != nil {
+			result.StatusCode = -501
+			return result, err
+		}
+		result.Products = append(result.Products, singleProduct)
+	}
+	if err != nil {
+		result.StatusCode = -502
+		return result, err
+	}
+	if result.Products == nil {
+		result.StatusCode = -503
+		result.Products = []Product{}
+	}
+	defer rows.Close()
+	return result, nil
+}
+
+func GetCategories() (*CategoryLists, error) {
+	result := new(CategoryLists)
+	rows, err := database.DB.Query("SELECT category_id,category_name,category_image FROM categories")
+	if err != nil {
+		result.StatusCode = -500
+		return result, err
+	}
+
+	for rows.Next() {
+		singleCategory := Catergory{}
+		if err := rows.Scan(&singleCategory.CatergoryID, &singleCategory.CatergoryName, &singleCategory.CatergoryImage); err != nil {
+			result.StatusCode = -501
+			return result, err
+		}
+		result.Categories = append(result.Categories, singleCategory)
+	}
+	if err != nil {
+		result.StatusCode = -502
+		return result, err
+	}
+	//To avoid passing null back to the user
+	if result.Categories == nil {
+		result.StatusCode = -503
+		result.Categories = []Catergory{}
 	}
 	defer rows.Close()
 	return result, nil

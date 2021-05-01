@@ -1,8 +1,10 @@
-
+DROP TABLE categories;
+DROP TABLE products;
 CREATE TABLE categories (
     category_id       INT NOT NULL AUTO_INCREMENT,
     category_name     VARCHAR(100) UNIQUE,
     category_image    VARCHAR(100),
+    createdAt       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY       (category_id)
 );
 
@@ -17,6 +19,7 @@ CREATE TABLE products (
     price              DECIMAL,
     stock               DECIMAL, 
     product_packtype    VARCHAR(100),
+    createdAt       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY(product_id),
     FOREIGN KEY (category_id) REFERENCES categories(category_id)
 );
