@@ -15,8 +15,7 @@ The raw sql is stored here for research a testing purposes
 * categories
 * transaction_cost_rate
 
-## QUERIES
----- 
+
 
     
 
