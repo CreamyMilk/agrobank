@@ -1,6 +1,7 @@
 package store
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -94,13 +95,14 @@ func (p *Product) GetCurrentStock() int {
 	return p.Stock
 }
 
-func (p *Product) DeceremtStockBy(reductionAmount int64) error {
+//Database transactions mehtod that is dependat if the invoice was placed succefully
+func (p *Product) DeceremtStockBy(tx *sql.Tx, reductionAmount int64) error {
 	currentStock := p.GetCurrentStock()
 	newStock := currentStock - int(reductionAmount)
 	if !p.CanBePurchased(reductionAmount) {
 		return fmt.Errorf("the stock (%v) being purchased is relatively higher than the available stock(%v)", currentStock, reductionAmount)
 	}
-	_, err := database.DB.Exec("UPDATE products SET stock=? WHERE product_id=?", newStock, p.ProductID)
+	_, err := tx.Exec("UPDATE products SET stock=? WHERE product_id=?", newStock, p.ProductID)
 	if err != nil {
 		return fmt.Errorf("---%v", err)
 	}
@@ -121,6 +123,11 @@ func (p *Product) GetWalletOfProductOwner() *wallet.Wallet {
 		return nil
 	}
 	return wallet.GetWalletByName(ownersPhonenumber)
+}
+
+func (p *Product) GetProductShortName() string {
+	//IMplement Name shortenning here to be able to not fill a users transaction with long unecessary names
+	return p.ProductName
 }
 
 func GetProductsByOwnerID(owner_id int64) (*ProductsList, error) {
