@@ -13,13 +13,13 @@ CREATE TABLE products (
     category_id         INT NOT NULL,
     owner_id            INT NOT NULL,
     product_name        VARCHAR(100),
-    product_image       VARCHAR(100),
-    product_image_large VARCHAR(100),
+    product_image       VARCHAR(1000),
+    product_image_large VARCHAR(1000),
     descriptions        VARCHAR(500),
-    price              DECIMAL(10,4),
+    price               DECIMAL(10,4),
     stock               INT, 
     product_packtype    VARCHAR(100),
-    createdAt       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    createdAt           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY(product_id),
     FOREIGN KEY (category_id) REFERENCES categories(category_id)
 );

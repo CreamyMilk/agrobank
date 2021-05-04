@@ -58,5 +58,3 @@ curl --header "Content-Type: application/json"   http://localhost:3000/store/cat
 
 ```
 
-
-
