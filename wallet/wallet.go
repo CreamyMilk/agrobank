@@ -1,11 +1,9 @@
 package wallet
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
-	"math/rand"
-	"strconv"
-	"time"
 
 	"github.com/CreamyMilk/agrobank/database"
 	"github.com/CreamyMilk/agrobank/notification"
@@ -54,6 +52,10 @@ func GetTransactionPrice(amount int64) (int64, error) {
 		return 0, errors.New("transaction cost coult not be determined")
 	}
 	return int64(transactionCost), nil
+}
+
+func (w *Wallet) WalletName() string {
+	return w.name
 }
 
 //Create Adds New wallet into db
@@ -280,45 +282,34 @@ func (w *Wallet) SendMoney(amountToSend int64, recipientW Wallet) (string, bool)
 	}
 	return "", true
 }
+
 func MakeTransactionCode() string {
 	//Add check to ensure generated uuuids here
 	return uuidgen()
 }
 
-func uuidgen() string {
-	rand.Seed(time.Now().UnixNano())
-	uuid := "Tx"
-	for ii := 0; ii <= 15; ii += 1 {
-		switch ii {
-		case 4:
-			uuid += "-"
-		case 5:
-			r := upperBytes[rand.Intn(len(upperBytes))]
-			uuid += string(r)
-		case 6:
-			r := upperBytes[rand.Intn(len(upperBytes))]
-			uuid += string(r)
-		case 7:
-			r := upperBytes[rand.Intn(len(upperBytes))]
-			uuid += string(r)
-		case 8:
-			r := upperBytes[rand.Intn(len(upperBytes))]
-			uuid += string(r)
-		case 9:
-			uuid += "-"
-		case 12:
-			r := lowerBytes[rand.Intn(len(lowerBytes))]
-			uuid += string(r)
-		case 14:
-			uuid += "-"
-		case 15:
-			r := upperBytes[rand.Intn(len(upperBytes))]
-			uuid += string(r)
-		default:
-			r := strconv.Itoa(rand.Intn(9))
-			uuid += r
-		}
+func (w *Wallet) PayEscrow(tx *sql.Tx, productShortName string, productCode string, amountPayable int64) error {
+
+	newRecipientBalance := w.GetBalance() - amountPayable
+
+	if newRecipientBalance < 0 {
+		tx.Rollback()
+		return errors.New("sadly you dont have enough funds to complete the trasaction")
 	}
-	//Check uniqueness
-	return uuid
+	_, err := tx.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newRecipientBalance, w.name)
+	if err != nil {
+		tx.Rollback()
+		return errors.New("sadly we were unable to charge you account kindly try again later")
+	}
+	//look into a way to charge to charge users if they place an order
+	transactionCost := 0
+	_, err = tx.Exec(`INSERT INTO transactions_list 
+	(transuuid,sender_name,receiver_name,amount,charge,ttype) 
+	VALUES (?,?,?,?,?,?)`, productCode, w.name, productShortName, amountPayable, transactionCost, ESCROW_PAYMENT)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
 }
