@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 const (
@@ -46,16 +47,29 @@ func SendNotification(walletName string, typeofnotifcation int, amount int64) (s
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("cache-control", "no-cache")
 
-	client := &http.Client{}
-	response, _ := client.Do(request)
-	body, _ := ioutil.ReadAll(response.Body)
+	client := http.Client{
+		Timeout: 20 * time.Second,
+	}
+
+	response, err := client.Do(request)
+	if err != nil {
+		return "", err
+	}
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return "", err
+	}
 
 	var notifResponse map[string]string
-	json.Unmarshal([]byte(body), &notifResponse)
-	//fmt.Printf("%v", tempSTK)
-	if notifResponse["status"] == "0" {
-
-		return "Sent Succesfully", nil
+	err = json.Unmarshal([]byte(body), &notifResponse)
+	if err != nil {
+		return "", err
 	}
-	return "Error has occured", fmt.Errorf("could not send STK push because %v", notifResponse)
+
+	//fmt.Printf("%v", tempSTK)
+	if notifResponse["status"] != "0" {
+		return "Error has occured", fmt.Errorf("could not send STK push because %v", notifResponse)
+	}
+	return "Sent Succesfully", nil
 }

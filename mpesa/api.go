@@ -44,7 +44,10 @@ func (s Service) auth() (string, error) {
 	req.Header.Add("Accept-Encoding", "gzip, deflate")
 	req.Header.Add("Connection", "keep-alive")
 
-	res, err := http.DefaultClient.Do(req)
+	client := http.Client{
+		Timeout: 30 * time.Second,
+	}
+	res, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("could not send auth request: %v", err)
 	}

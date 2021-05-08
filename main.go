@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/CreamyMilk/agrobank/database"
@@ -9,9 +8,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
-
-//DB holds global database object
-var DB *sql.DB
 
 func main() {
 	app := fiber.New()
