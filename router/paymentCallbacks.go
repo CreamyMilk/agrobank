@@ -1,8 +1,10 @@
 package router
 
 import (
+	"errors"
 	"fmt"
 
+	"github.com/CreamyMilk/agrobank/deposit"
 	"github.com/CreamyMilk/agrobank/registration"
 	"github.com/gofiber/fiber/v2"
 )
@@ -36,10 +38,19 @@ func StkcallHandler(c *fiber.Ctx) error {
 	}
 
 	if r.Body.StkCallback.ResultCode == 0 {
-		p := registration.GetTempByID(r.Body.StkCallback.CheckoutRequestID)
-		err := p.InsertPermanent()
+		inv := deposit.GetInvoiceByID(r.Body.StkCallback.CheckoutRequestID)
+		if inv == nil {
+			fmt.Print(errors.New("invoice not found"))
+			return c.JSON(&fiber.Map{
+				"ResponseCode": "00000000",
+				"ResponseDesc": "success",
+			})
+		}
+		mpesaReceiptNumber := r.Body.StkCallback.CallbackMetadata.Item[1].Value.(string)
+		err := inv.PayOut(mpesaReceiptNumber)
 		if err != nil {
-			//Someone paid via Mpesa but did not fill registration forms
+			p := registration.GetTempByID(r.Body.StkCallback.CheckoutRequestID)
+			err := p.InsertPermanent()
 			fmt.Print(err)
 		}
 	}

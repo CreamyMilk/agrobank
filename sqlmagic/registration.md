@@ -38,7 +38,7 @@ curl --header "Content-Type: application/json"   --request POST   --data '{
 "Body": {
 "stkCallback": {
 "MerchantRequestID": "28288-21648703-1",
-"CheckoutRequestID": "PPP",
+"CheckoutRequestID": "pos",
 "ResultCode": 0,
 "ResultDesc": "The service request is processed successfully.",
 "CallbackMetadata": {
@@ -77,7 +77,7 @@ curl --header "Content-Type: application/json"   --request POST   --data '
 "Body": {
 "stkCallback": {
 "MerchantRequestID": "26201-49702325-1",
-"CheckoutRequestID": "ws_CO_140820201532442074",
+"CheckoutRequestID": "pos",
 "ResultCode": 1,
 "ResultDesc": "The balance is insufficient for the transaction"
 }

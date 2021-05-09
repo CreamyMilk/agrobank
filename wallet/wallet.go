@@ -97,17 +97,16 @@ func (w *Wallet) GetBalance() int64 {
 func (w *Wallet) GetTransactions() (*Transactions, error) {
 	result := new(Transactions)
 	rows, err := database.DB.Query(`
-	
-	SELECT CONCAT(fname,' ',mname,' ',lname)as senderName,
+    SELECT  COALESCE(CONCAT(fname,' ',mname,' ',lname) ,receiver_name) as name,
     transuuid,sender_name,
     receiver_name,amount,
     charge,ttype,
     transactions_type.name as transactionName,
-	UNIX_TIMESTAMP(createdAt) as timestamp
-	FROM transactions_list 
-    INNER JOIN user_registration 
-    ON user_registration.phonenumber=sender_name
-	LEFT JOIN transactions_type 
+    UNIX_TIMESTAMP(transactions_list.createdAt) as timestamp
+    FROM transactions_list 
+    LEFT JOIN user_registration 
+    ON user_registration.phonenumber=receiver_name
+    LEFT JOIN transactions_type 
     ON transactions_list.ttype = transactions_type.type
     WHERE (sender_name=? OR receiver_name=?) 
     ORDER BY timestamp DESC LIMIT 15

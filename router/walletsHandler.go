@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/CreamyMilk/agrobank/deposit"
 	"github.com/CreamyMilk/agrobank/login"
 	"github.com/CreamyMilk/agrobank/mpesa"
 	"github.com/CreamyMilk/agrobank/wallet"
@@ -60,13 +61,20 @@ func depositCashHandler(c *fiber.Ctx) error {
 			"message": "error retriving your wallet info",
 		})
 	}
-
-	why, err := mpesa.SendSTK(req.Phone, req.Amount, req.WalletName, req.FmcToken)
-
+	checkoutID, err := mpesa.SendSTK(req.Phone, req.Amount, req.WalletName, req.FmcToken)
 	if err != nil {
 		return c.JSON(&fiber.Map{
 			"status":  -3,
-			"message": why,
+			"message": err.Error(),
+		})
+	}
+
+	invoice := deposit.MakeInvoice(checkoutID, *userwallet, req.Amount)
+	err = invoice.Create()
+	if err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -4,
+			"message": err.Error(),
 		})
 	}
 

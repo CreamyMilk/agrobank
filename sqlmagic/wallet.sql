@@ -33,6 +33,18 @@ CREATE TABLE transactions_list(
     PRIMARY KEY     (tid)
 );
 
+CREATE TABLE deposit_attempts(
+    did               int NOT NULL AUTO_INCREMENT,
+    checkoutRequestID VARCHAR(100) UNIQUE,
+    walletname        VARCHAR(100),
+    amount            BIGINT,
+    ttype             INT DEFAULT 0,
+    method            VARCHAR(100) DEFAULT "MPESA",
+    mpesaID           VARCHAR(100),
+    createdAt         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY       (did)
+);
+
 CREATE TABLE notification_table(
     nid         INT NOT NULL AUTO_INCREMENT,
     userid      INT,
@@ -41,20 +53,20 @@ CREATE TABLE notification_table(
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 )
 
-
 INSERT INTO transactions_type (type,name) VALUES (0, "Deposit");
 INSERT INTO transactions_type (type,name) VALUES (1, "Withdraw");
 INSERT INTO transactions_type (type,name) VALUES (2, "SendMoney");
 INSERT INTO transactions_type (type,name) VALUES (3, "SendToMpesa");
 
+DROP   TABLE transaction_costs;
 INSERT INTO transaction_costs (upper_limit,cost) VALUES (100,1);
 INSERT INTO transaction_costs (upper_limit,cost) VALUES (1000,5);
 INSERT INTO transaction_costs (upper_limit,cost) VALUES (10000,10);
 INSERT INTO transaction_costs (upper_limit,cost) VALUES (100000,15);
 INSERT INTO transaction_costs (upper_limit,cost) VALUES (1000000,20);
 INSERT INTO transaction_costs (upper_limit,cost) VALUES (10000000,25);
-INSERT INTO transaction_costs (upper_limit,cost) VALUES (100000000,100000000);
-
+INSERT INTO transaction_costs (upper_limit,cost) VALUES (100000000,100);
+INSERT INTO transaction_costs (upper_limit,cost) VALUES (999999999999,200);
 
 SELECT  cost FROM transaction_costs WHERE upper_limit >=10000 LIMIT 1;
 INSERT       INTO wallets_store (wallet_name,balance) VALUES("JOB",1000);
