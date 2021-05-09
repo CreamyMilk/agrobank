@@ -19,6 +19,7 @@ type Wallet struct {
 type Transaction struct {
 	TransactionID string `json:"transactionid"`
 	From          string `json:"from"`
+	FromName      string `json:"fromName"`
 	To            string `json:"to"`
 	Amount        int64  `json:"amount"`
 	Charge        int64  `json:"charge"`
@@ -96,14 +97,21 @@ func (w *Wallet) GetBalance() int64 {
 func (w *Wallet) GetTransactions() (*Transactions, error) {
 	result := new(Transactions)
 	rows, err := database.DB.Query(`
-	SELECT transuuid,sender_name,receiver_name,amount,charge,ttype,transactions_type.name as transactionName,
-	UNIX_TIMESTAMP(craetedAt) as timestamp
+	
+	SELECT CONCAT(fname,' ',mname,' ',lname)as senderName,
+    transuuid,sender_name,
+    receiver_name,amount,
+    charge,ttype,
+    transactions_type.name as transactionName,
+	UNIX_TIMESTAMP(createdAt) as timestamp
 	FROM transactions_list 
-	LEFT JOIN transactions_type
-	ON transactions_list.ttype = transactions_type.type
-	WHERE sender_name=?
-	OR    receiver_name=? 
-  	ORDER BY timestamp DESC LIMIT 15`, w.name, w.name)
+    INNER JOIN user_registration 
+    ON user_registration.phonenumber=sender_name
+	LEFT JOIN transactions_type 
+    ON transactions_list.ttype = transactions_type.type
+    WHERE (sender_name=? OR receiver_name=?) 
+    ORDER BY timestamp DESC LIMIT 15
+	`, w.name, w.name)
 
 	if err != nil {
 		result.StatusCode = -500
@@ -113,6 +121,7 @@ func (w *Wallet) GetTransactions() (*Transactions, error) {
 	for rows.Next() {
 		singleTransaction := Transaction{}
 		if err := rows.Scan(
+			&singleTransaction.FromName,
 			&singleTransaction.TransactionID,
 			&singleTransaction.From,
 			&singleTransaction.To,

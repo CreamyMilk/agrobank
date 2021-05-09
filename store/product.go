@@ -113,7 +113,7 @@ func (p *Product) DeceremtStockBy(tx *sql.Tx, reductionAmount int64) error {
 func (p *Product) CanBePurchased(quantity int64) bool {
 	currentStock := p.GetCurrentStock()
 	newStock := currentStock - int(quantity)
-	return newStock >= 0
+	return newStock > 0
 }
 
 func (p *Product) GetWalletOfProductOwner() *wallet.Wallet {

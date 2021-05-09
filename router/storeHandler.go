@@ -26,7 +26,7 @@ func addProductHandler(c *fiber.Ctx) error {
 	if err := tempProduct.AddProduct(); err != nil {
 		return c.JSON(&fiber.Map{
 			"status":  -2,
-			"message": "An error occured while inserting the product",
+			"message": err.Error(),
 		})
 	}
 	return c.JSON(&fiber.Map{
