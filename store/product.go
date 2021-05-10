@@ -20,6 +20,7 @@ type Product struct {
 	PackingType       string  `json:"packingtype"`
 	Stock             int     `json:"stock"`
 	Price             float64 `json:"price"`
+	PriceString       string  `json:"priceString"`
 }
 type ProductsList struct {
 	Products   []Product `json:"products"`

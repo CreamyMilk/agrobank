@@ -42,14 +42,12 @@ curl --header "Content-Type: application/json"   --request POST   --data '
 ```
 
 
-## Get Transactions
+## get transactions
 
 ```json
-curl --header "Content-Type: application/json"   --request POST   --data '
+curl --header "content-type: application/json"   --request post   --data '
 {
 "walletname"     : "254797678251"
 }' http://localhost:3000/wallet/transactions
 
 ```
-
-http localhost:8081/notifytopic topic="." title="Bold Title" extra="Money Added"

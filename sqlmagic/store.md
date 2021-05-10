@@ -58,3 +58,13 @@ curl --header "Content-Type: application/json"   http://localhost:3000/store/cat
 
 ```
 
+
+## get orders
+```json
+curl --header "content-type: application/json"   --request POST   --data '
+{
+"walletname"     : "254797678252"
+}' http://localhost:3000/invoice/orders
+
+```
+

@@ -22,6 +22,70 @@ type EscrowInvoice struct {
 	CompletedAt int64
 }
 
+type EscrowTransactions struct {
+	EscrowID       int64   `json:"eid"`
+	BuyerName      string  `json:"buyer"`
+	SellerName     string  `json:"seller"`
+	ProductID      int64   `json:"productID,omitempty"`
+	ProductName    string  `json:"pname,omitempty"`
+	TotalPrice     float64 `json:"total"`
+	CompletionCode string  `json:"code,omitempty"`
+	CreatedAt      int64
+	Deadline       int64
+	CompletedAt    int64
+}
+type EscrowOrdersReponse struct {
+	Orders     []EscrowTransactions `json:"orders"`
+	StatusCode int                  `json:"status"`
+	Total      int64                `json:"total"`
+}
+
+func GetInvoicesTowardsSeller(sellerWalletName string) (*EscrowOrdersReponse, error) {
+	seller := wallet.GetWalletByName(sellerWalletName)
+	if seller == nil {
+		return nil, errors.New("sadly you seem to not have a active mobile wallet")
+	}
+	result := new(EscrowOrdersReponse)
+	rows, err := database.DB.Query(`SELECT 
+		eid ,
+		senderWalletName       ,		
+		receiverWalletName     ,
+		prodcutID,  amount   
+		FROM escrowInvoices
+		WHERE 
+		receiverWalletName = ?;
+	`, seller.WalletName())
+	if err != nil {
+		result.StatusCode = -500
+		return result, err
+	}
+
+	for rows.Next() {
+		singleOrder := EscrowTransactions{}
+		if err := rows.Scan(
+			&singleOrder.EscrowID,
+			&singleOrder.BuyerName,
+			&singleOrder.SellerName,
+			&singleOrder.ProductID,
+			&singleOrder.TotalPrice,
+		); err != nil {
+			result.StatusCode = -501
+			return result, err
+		}
+		result.Total += int64(singleOrder.TotalPrice)
+		result.Orders = append(result.Orders, singleOrder)
+	}
+	if err != nil {
+		result.StatusCode = -502
+		return result, err
+	}
+	if result.Orders == nil {
+		result.StatusCode = -503
+	}
+	defer rows.Close()
+	return result, nil
+}
+
 func CreateEscrowTransaction(buyerWalletName string, productID int64, quantity int64) (*EscrowInvoice, error) {
 	buyer := wallet.GetWalletByName(buyerWalletName)
 	if buyer == nil {
@@ -99,3 +163,19 @@ func CreateEscrowTransaction(buyerWalletName string, productID int64, quantity i
 	tx.Commit()
 	return tempInvoice, nil
 }
+
+//Settle Escrow
+func (escrow *EscrowInvoice) Settle() error {
+	//Send Money to seller
+	//Inform the buyer
+	return nil
+}
+
+//Reverse Escrow
+func (escrow *EscrowInvoice) Reverse() error {
+	//Send Money back to the owner
+	//Inform the seller that the purchase did not go through due to time
+	return nil
+}
+
+//Get orders / Escrows for a particular seller
