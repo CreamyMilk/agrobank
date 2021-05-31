@@ -28,6 +28,14 @@ func SetupRoutes(app *fiber.App) {
 	store.Get("/categories", getAllCategoriesHandler)
 	store.Post("/products", getAllProductsByCategoryHandler)
 
+	machine := app.Group("/machine")
+
+	machine.Post("/add", addProductHandler)
+	machine.Put("/update", upadateProductHandler)
+	machine.Post("/stock", getUserMachineshandler)
+	machine.Get("/categories", getAllMachineCategoriesHandler)
+	machine.Post("/products", getAllMachinarysByCategoryHandler)
+
 	invoice := app.Group("/invoice")
 
 	invoice.Post("/create", createPurchaseInvoiceHandler)

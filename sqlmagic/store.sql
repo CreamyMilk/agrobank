@@ -3,7 +3,7 @@ DROP TABLE products;
 CREATE TABLE categories (
     category_id       INT NOT NULL AUTO_INCREMENT,
     category_name     VARCHAR(100) UNIQUE,
-    category_image    VARCHAR(100),
+    category_image    VARCHAR(1000),
     createdAt       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY       (category_id)
 );
@@ -27,7 +27,23 @@ CREATE TABLE products (
 
 
 INSERT INTO categories (category_name,category_image) 
-VALUES ("FoodStaff","https://foods.com");
+VALUES ("Cash Crops","https://foods.com");
+
+INSERT INTO categories (category_name,category_image) 
+VALUES ("Food Crops","https://foods.com");
+
+
+INSERT INTO categories (category_name,category_image) 
+VALUES ("Fish ","https://foods.com");
+
+
+INSERT INTO categories (category_name,category_image) 
+VALUES ("Poultry","https://foods.com");
+
+
+INSERT INTO categories (category_name,category_image) 
+VALUES ("Livestock","https://foods.com");
+
 
 
 INSERT INTO products (
