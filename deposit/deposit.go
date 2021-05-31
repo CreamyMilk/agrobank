@@ -31,7 +31,7 @@ func GetInvoiceByID(id string) *depositInvoice {
 	}
 	err = getBalStm.QueryRow(id).Scan(&r.DepositID, &r.CheckoutRequestID, &walletName, &r.Amount)
 	if err != nil {
-		fmt.Print(err)
+		fmt.Println(err)
 		return nil
 	}
 	r.Wallet = *wallet.GetWalletByName(walletName)

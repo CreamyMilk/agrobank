@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	notificationaURL = "http://localhost:8081/notifytopic"
+	notificationaURL  = "http://localhost:8081/notifytopic"
+	registrationNotif = "http://localhost:8081/notifyregistration"
 )
 
 type NotificationRequest struct {
@@ -18,6 +19,11 @@ type NotificationRequest struct {
 	Title       string `json:"title"`
 	Extra       string `json:"extra"`
 	MessageType int    `json:"type"`
+}
+
+type registerNotifRequest struct {
+	Topic string `json:"topic"`
+	Role  string `json:"role"`
 }
 
 func createMessage(walletName string, notificationType int, amount int64) (string, string) {
@@ -44,6 +50,43 @@ func SendNotification(walletName string, typeofnotifcation int, amount int64) (s
 
 	jsonValue, _ := json.Marshal(newnotif)
 	request, _ := http.NewRequest("POST", notificationaURL, bytes.NewBuffer(jsonValue))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("cache-control", "no-cache")
+
+	client := http.Client{
+		Timeout: 20 * time.Second,
+	}
+
+	response, err := client.Do(request)
+	if err != nil {
+		return "", err
+	}
+	body, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return "", err
+	}
+
+	var notifResponse map[string]string
+	err = json.Unmarshal([]byte(body), &notifResponse)
+	if err != nil {
+		return "", err
+	}
+
+	//fmt.Printf("%v", tempSTK)
+	if notifResponse["status"] != "0" {
+		return "Error has occured", fmt.Errorf("could not send STK push because %v", notifResponse)
+	}
+	return "Sent Succesfully", nil
+}
+
+func SendregistrationNotification(topic string, role string) (string, error) {
+	newnotif := new(registerNotifRequest)
+	newnotif.Topic = topic
+	newnotif.Role = role
+
+	jsonValue, _ := json.Marshal(newnotif)
+	request, _ := http.NewRequest("POST", registrationNotif, bytes.NewBuffer(jsonValue))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("cache-control", "no-cache")
 

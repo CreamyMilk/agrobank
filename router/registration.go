@@ -13,7 +13,8 @@ func TempRegistrationHandler(c *fiber.Ctx) error {
 			"message": err.Error(),
 		})
 	}
-	if err := r.TempCreate(); err != nil {
+	err, topic := r.TempCreate()
+	if err != nil {
 		return c.JSON(&fiber.Map{
 			"status":  -1,
 			"message": err.Error(),
@@ -22,6 +23,7 @@ func TempRegistrationHandler(c *fiber.Ctx) error {
 
 	return c.JSON(&fiber.Map{
 		"status":  0,
+		"topic":   topic,
 		"message": "Registraion was successful",
 	})
 }

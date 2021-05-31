@@ -14,6 +14,36 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
+
+function sendRegistrationData(topicName,role){
+    const message = {
+        data: {
+            type:"role",
+            content:role 
+        },
+         notification:{
+            title:"Registration Complete",
+            body:role,
+        },
+      "android":{
+       "notification":{
+         "icon":"stock_ticker_update",
+         "color":"#7e55c3"
+       }
+     },
+        topic: topicName,
+    };
+
+    admin
+    .messaging()
+    .send(message,)
+    .then((response) => {
+        console.log("Successfully Registration message:", response);
+    })
+    .catch((error) => {
+        console.log("Error sending message:", error);
+    });
+}
 function sendToTopic(topicName,messageTitle,messageDescription,messageType){
     const message = {
         data: {
@@ -47,6 +77,7 @@ function sendToTopic(topicName,messageTitle,messageDescription,messageType){
 app.get('/',(req,res)=>{    
     res.json({me:"Happy"})
 })
+
 app.post("/notifytopic",(req,res)=>{
  let topic = req.body.topic;
  let title = req.body.title;
@@ -57,10 +88,22 @@ sendToTopic(topic,title,extra,mtype);
    status:"0",
    message: "Nofication Sent succesfully",
   })});
+
+app.post("/notifyregistration",(req,res)=>{
+ console.table(req.body)
+ let topicName = req.body.topic;
+ let role = req.body.role;
+
+ sendRegistrationData(topicName,role)
+  res.json({
+   status:"0",
+   message: "Nofication Sent succesfully",
+  })});
+
 app.use((req,res,next)=>{
     res.json({status:"We are healthy"})
 })
 app.listen(port,()=>{
-    sendToTopic(".","You Have received funds","From James Kamau \n Receipt No:10101010101")
+    sendToTopic("pppppppppp","You Have received funds","From James Kamau \n Receipt No:10101010101")
     console.log("FCM",port)
 })

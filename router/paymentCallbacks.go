@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/CreamyMilk/agrobank/deposit"
+	"github.com/CreamyMilk/agrobank/notification"
 	"github.com/CreamyMilk/agrobank/registration"
 	"github.com/gofiber/fiber/v2"
 )
@@ -38,21 +39,35 @@ func StkcallHandler(c *fiber.Ctx) error {
 	}
 
 	if r.Body.StkCallback.ResultCode == 0 {
-		inv := deposit.GetInvoiceByID(r.Body.StkCallback.CheckoutRequestID)
-		if inv == nil {
+		check := r.Body.StkCallback.CheckoutRequestID
+		inv := deposit.GetInvoiceByID(check)
+		mpesaReceiptNumber := r.Body.StkCallback.CallbackMetadata.Item[1].Value.(string)
+		if inv != nil {
+			err := inv.PayOut(mpesaReceiptNumber)
+			if err != nil {
+				fmt.Print(err)
+			}
 			fmt.Print(errors.New("invoice not found"))
 			return c.JSON(&fiber.Map{
 				"ResponseCode": "00000000",
 				"ResponseDesc": "success",
 			})
 		}
-		mpesaReceiptNumber := r.Body.StkCallback.CallbackMetadata.Item[1].Value.(string)
-		err := inv.PayOut(mpesaReceiptNumber)
+
+		fmt.Print(mpesaReceiptNumber)
+
+		p := registration.GetTempByID(r.Body.StkCallback.CheckoutRequestID)
+		err := p.InsertPermanent()
 		if err != nil {
-			p := registration.GetTempByID(r.Body.StkCallback.CheckoutRequestID)
-			err := p.InsertPermanent()
-			fmt.Print(err)
+			fmt.Printf("Failed to send notifcation because %v", err)
 		}
+		fmt.Println("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM")
+		fmt.Println(check)
+		_, err = notification.SendregistrationNotification(check, p.Role)
+		if err != nil {
+			fmt.Printf("Failed to send notifcation because \n%v", err)
+		}
+
 	}
 
 	return c.JSON(&fiber.Map{

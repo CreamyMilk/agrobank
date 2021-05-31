@@ -48,7 +48,7 @@ curl --header "Content-Type: application/json"   --request POST   --data '{
 
 "ownerid"       :  1
 
-}' http://localhost:3000/store/stock
+}' http://localhost:3000/machine/stock
 
 ```
 

@@ -38,7 +38,7 @@ curl --header "Content-Type: application/json"   --request POST   --data '{
 "Body": {
 "stkCallback": {
 "MerchantRequestID": "28288-21648703-1",
-"CheckoutRequestID": "pos",
+"CheckoutRequestID": "ws_CO_310520211128597674",
 "ResultCode": 0,
 "ResultDesc": "The service request is processed successfully.",
 "CallbackMetadata": {

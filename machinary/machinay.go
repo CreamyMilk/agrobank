@@ -64,7 +64,7 @@ func (p *Machinary) UpdateMachinary() error {
     price=?,
     stock=?,
     machine_packtype=?
-	WHERE machine_id=?;`, p.CategoryID, p.OwnerID, p.MachinaryName, p.MachinaryImage,
+	WHERE machineID=?;`, p.CategoryID, p.OwnerID, p.MachinaryName, p.MachinaryImage,
 		p.MachinaryImageLarge, p.Description, p.Price, p.Stock, p.PackingType, p.MachinaryID)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (p *Machinary) UpdateMachinary() error {
 	return nil
 }
 func (p *Machinary) DeleteMachinary() error {
-	_, err := database.DB.Exec("DELETE FROM machines WHERE machine_id=?", p.MachinaryID)
+	_, err := database.DB.Exec("DELETE FROM machines WHERE machineID=?", p.MachinaryID)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func (p *Machinary) DeleteMachinary() error {
 
 func (p *Machinary) GetCurrentStock() int {
 	tempStock := 0
-	err := database.DB.QueryRow("SELECT stock FROM machines WHERE machine_id = ?", p.MachinaryID).Scan(&tempStock)
+	err := database.DB.QueryRow("SELECT stock FROM machines WHERE machineID = ?", p.MachinaryID).Scan(&tempStock)
 	if err != nil {
 		fmt.Printf("Unable to retrive current stock because of error %v", err)
 	}
@@ -103,7 +103,7 @@ func (p *Machinary) DeceremtStockBy(tx *sql.Tx, reductionAmount int64) error {
 	if !p.CanBePurchased(reductionAmount) {
 		return fmt.Errorf("the stock (%v) being purchased is relatively higher than the available stock(%v)", currentStock, reductionAmount)
 	}
-	_, err := tx.Exec("UPDATE machines SET stock=? WHERE machine_id=?", newStock, p.MachinaryID)
+	_, err := tx.Exec("UPDATE machines SET stock=? WHERE machineID=?", newStock, p.MachinaryID)
 	if err != nil {
 		return fmt.Errorf("---%v", err)
 	}
@@ -119,7 +119,7 @@ func (p *Machinary) CanBePurchased(quantity int64) bool {
 
 func (p *Machinary) GetWalletOfMachinaryOwner() *wallet.Wallet {
 	ownersPhonenumber := ""
-	err := database.DB.QueryRow("SELECT phonenumber FROM machines INNER JOIN user_registration ON machines.owner_id = user_registration.userid WHERE machine_id=? ", p.MachinaryID).Scan(&ownersPhonenumber)
+	err := database.DB.QueryRow("SELECT phonenumber FROM machines INNER JOIN user_registration ON machines.owner_id = user_registration.userid WHERE machineID=? ", p.MachinaryID).Scan(&ownersPhonenumber)
 	if err != nil {
 		return nil
 	}
@@ -134,7 +134,7 @@ func (p *Machinary) GetMachinaryShortName() string {
 func GetMachinarysByOwnerID(owner_id int64) (*MachinarysList, error) {
 	result := new(MachinarysList)
 	rows, err := database.DB.Query(`
-	SELECT machine_id, 
+	SELECT machineID, 
   	category_id,
 	machine_name,
 	machine_image,
@@ -182,7 +182,7 @@ func GetMachinarysByOwnerID(owner_id int64) (*MachinarysList, error) {
 func GetMachinarysByCategoryID(category_id int64) (*MachinarysList, error) {
 	result := new(MachinarysList)
 	rows, err := database.DB.Query(`
-	SELECT machine_id, 
+	SELECT machineID, 
 	owner_id,
   	category_id,
 	machine_name,
@@ -260,7 +260,7 @@ func GetCategories() (*CategoryLists, error) {
 func GetMachinaryByMachinaryID(machineID int64) *Machinary {
 	tempMachinary := new(Machinary)
 	database.DB.QueryRow(`
-	SELECT machine_id, 
+	SELECT machineID, 
 	owner_id,
   	category_id,
 	machine_name,
@@ -269,7 +269,7 @@ func GetMachinaryByMachinaryID(machineID int64) *Machinary {
 	descriptions,
 	price,stock,
 	machine_packtype
-	FROM machines WHERE machine_id=?;
+	FROM machines WHERE machineID=?;
 	`, machineID).Scan(&tempMachinary.MachinaryID,
 		&tempMachinary.OwnerID,
 		&tempMachinary.CategoryID,

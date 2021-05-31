@@ -44,7 +44,7 @@ func TestNormalRegistration(t *testing.T) {
 				Xcordinates:     tc.xcordinates,
 				Ycordinates:     tc.ycordinates,
 				Role:            tc.role}
-			err := rl.TempCreate()
+			err, _ := rl.TempCreate()
 			if err != nil {
 				t.Errorf("Cannot create account because %v", err)
 			}

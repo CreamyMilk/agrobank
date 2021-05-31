@@ -48,28 +48,28 @@ func (r *RegistrationLimbo) IsRegisterd() bool {
 	return id != 0
 }
 
-func (r *RegistrationLimbo) TempCreate() error {
+func (r *RegistrationLimbo) TempCreate() (error, string) {
 	if r.IsRegisterd() {
-		return errors.New("an Account has alreday been opened for your number")
+		return errors.New("an Account has alreday been opened for your number"), ""
 	}
 	hash, _ := bcrypt.GenerateFromPassword([]byte(r.Password), 4)
 	r.passwordHash = string(hash)
 	values := []interface{}{r.IdNumber, r.PhoneNumber, r.FirstName, r.MiddleName, r.LastName, r.FcmToken, "", r.PhotoUrl, r.Email, r.passwordHash, r.InformalAddress, r.Xcordinates, r.Ycordinates, r.Role}
 	res, err := database.DB.Exec("INSERT registration_limbo (idnumber,phonenumber,fname,mname,lname,fcmToken,checkoutRequestID,photo_url,email,passwordHash,informal_address,xCords,yCords,role) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", values...)
 	if err != nil {
-		return errors.New("400")
+		return errors.New("400"), ""
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
-		return errors.New("402")
+		return errors.New("402"), ""
 	}
 	r.databaseID = id
-	err = r.sendPayment()
+	err, topicName := r.sendPayment()
 	if err != nil {
-		return errors.New("300")
+		return errors.New("300"), ""
 	}
 
-	return nil
+	return nil, topicName
 }
 
 func (r *RegistrationLimbo) InsertPermanent() error {
@@ -86,18 +86,18 @@ func (r *RegistrationLimbo) InsertPermanent() error {
 	return nil
 }
 
-func (r *RegistrationLimbo) sendPayment() error {
+func (r *RegistrationLimbo) sendPayment() (error, string) {
 	CheckoutRequestID, err := mpesa.SendSTK(r.PhoneNumber, strconv.Itoa(REGISTRATIONCOST), "JJJ", "ppp")
 	r.checkoutRequestID = CheckoutRequestID
 	if err != nil {
-		return (err)
+		return err, ""
 	}
 	updatevalues := []interface{}{r.checkoutRequestID, r.databaseID}
 	_, err = database.DB.Exec("UPDATE registration_limbo SET checkoutRequestID=? WHERE registerID=?", updatevalues...)
 	if err != nil {
-		return (err)
+		return err, ""
 	}
-	return nil
+	return nil, CheckoutRequestID
 }
 
 func (r *RegistrationLimbo) DeleteTempRegistraion() error {
