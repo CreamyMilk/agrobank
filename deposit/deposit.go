@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/CreamyMilk/agrobank/database"
+	"github.com/CreamyMilk/agrobank/notification"
 	"github.com/CreamyMilk/agrobank/wallet"
 )
 
@@ -68,6 +69,10 @@ func (i *depositInvoice) PayOut(receiptName string) error {
 	_, err = database.DB.Exec("UPDATE deposit_attempts SET mpesaID=? WHERE checkoutRequestID=?", receiptName, i.CheckoutRequestID)
 	if err != nil {
 		return err
+	}
+	_, err = notification.SendDepositNotifcation(i.Wallet.WalletName(), i.Amount)
+	if err != nil {
+		fmt.Printf("Failed to send notifcation because \n%v", err)
 	}
 	return nil
 }

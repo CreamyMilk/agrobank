@@ -161,6 +161,7 @@ func CreateEscrowTransaction(buyerWalletName string, productID int64, quantity i
 	tempInvoice.TotalPrice = totalPrice
 
 	tx.Commit()
+
 	return tempInvoice, nil
 }
 

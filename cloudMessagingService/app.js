@@ -14,6 +14,74 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
+function sendOrderData(orderObject){
+    const {Topic     , 
+	ProductName,
+	Quantity   ,
+	Amount     } = orderObject
+    const message = {
+        data: {
+            type:"order",
+            prodname:ProductName,
+            amount:Amount,
+            quantity:Quantity
+        },
+         notification:{
+            title:"Deposit Recieved",
+            body:`Ksh.${amount}`,
+        },
+      "android":{
+       "notification":{
+         "icon":"stock_ticker_update",
+         "color":"#7e55c3"
+       }
+     },
+        topic: Topic,
+    };
+
+    admin
+    .messaging()
+    .send(message,)
+    .then((response) => {
+        console.log("Successfully Deposit message:", response);
+    })
+    .catch((error) => {
+        console.log("Error sending Deposit message:", error);
+    });
+}
+
+
+
+
+function sendDepositData(topicName,amount){
+    const message = {
+        data: {
+            type:"deposit",
+            amount:amount 
+        },
+         notification:{
+            title:"Deposit Recieved",
+            body:`Ksh.${amount}`,
+        },
+      "android":{
+       "notification":{
+         "icon":"stock_ticker_update",
+         "color":"#7e55c3"
+       }
+     },
+        topic: topicName,
+    };
+
+    admin
+    .messaging()
+    .send(message,)
+    .then((response) => {
+        console.log("Successfully Deposit message:", response);
+    })
+    .catch((error) => {
+        console.log("Error sending Deposit message:", error);
+    });
+}
 
 function sendRegistrationData(topicName,role){
     const message = {
@@ -53,7 +121,6 @@ function sendToTopic(topicName,messageTitle,messageDescription,messageType){
          notification:{
             title:messageTitle,
             body:messageDescription,
-           image:"https://i.giphy.com/media/14SAx6S02Io1ThOlOY/giphy.webp",
         },
       "android":{
        "notification":{
@@ -63,7 +130,6 @@ function sendToTopic(topicName,messageTitle,messageDescription,messageType){
      },
         topic: topicName,
     };
-
     admin
     .messaging()
     .send(message,)
@@ -87,7 +153,7 @@ sendToTopic(topic,title,extra,mtype);
   res.json({
    status:"0",
    message: "Nofication Sent succesfully",
-  })});
+})});
 
 app.post("/notifyregistration",(req,res)=>{
  console.table(req.body)
@@ -99,6 +165,32 @@ app.post("/notifyregistration",(req,res)=>{
    status:"0",
    message: "Nofication Sent succesfully",
   })});
+
+
+
+app.post("/depositnotif",(req,res)=>{
+    console.table(req.body)
+    let topicName = req.body.topic;
+    let amount = req.body.amount;
+   
+    sendDepositData(topicName,amount)
+     res.json({
+      status:"0",
+      message: "Deposit Notification Sent succesfully",
+     })});
+   
+app.post("/ordernotif",(req,res)=>{
+    console.table(req.body)
+    let order =  {
+        Topic:req.body.topic, 
+        ProductName:req.body.prodname,
+        Quantity:req.body.quantity,
+        Amount:req.body.amount } 
+    sendOrderData(order)
+        res.json({
+        status:"0",
+        message: "Order Placement Worked",
+    })});
 
 app.use((req,res,next)=>{
     res.json({status:"We are healthy"})
