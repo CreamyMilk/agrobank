@@ -27,8 +27,8 @@ function sendOrderData(orderObject){
             quantity:Quantity
         },
          notification:{
-            title:"Deposit Recieved",
-            body:`Ksh.${amount}`,
+            title:`Order for ${ProductName} Recieved`,
+            body:`Ksh.${Amount}`,
         },
       "android":{
        "notification":{
