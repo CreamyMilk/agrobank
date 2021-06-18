@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/CreamyMilk/agrobank/database"
+	"github.com/CreamyMilk/agrobank/notification"
 	"github.com/CreamyMilk/agrobank/store"
 	"github.com/CreamyMilk/agrobank/wallet"
 )
@@ -160,6 +161,11 @@ func CreateEscrowTransaction(buyerWalletName string, productID int64, quantity i
 	tempInvoice.Product = product
 	tempInvoice.TotalPrice = totalPrice
 
+	b, err := notification.SendOrderNotifcation(seller.WalletName(), product.ProductName, fmt.Sprintf("%d", quantity), fmt.Sprintf("%f", totalPrice))
+	if err != nil {
+		fmt.Println(b)
+		fmt.Println(err)
+	}
 	tx.Commit()
 
 	return tempInvoice, nil

@@ -137,7 +137,7 @@ func SendDepositNotifcation(topic string, amount string) (string, error) {
 	newnotif.Amount = amount
 
 	jsonValue, _ := json.Marshal(newnotif)
-	request, _ := http.NewRequest("POST", registrationNotif, bytes.NewBuffer(jsonValue))
+	request, _ := http.NewRequest("POST", depositNotfUrl, bytes.NewBuffer(jsonValue))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("cache-control", "no-cache")
 
@@ -176,7 +176,7 @@ func SendOrderNotifcation(topic string, product string, quantity string, amount 
 	newnotif.Amount = amount
 
 	jsonValue, _ := json.Marshal(newnotif)
-	request, _ := http.NewRequest("POST", registrationNotif, bytes.NewBuffer(jsonValue))
+	request, _ := http.NewRequest("POST", orderURl, bytes.NewBuffer(jsonValue))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("cache-control", "no-cache")
 
