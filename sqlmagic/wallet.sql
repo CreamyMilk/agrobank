@@ -1,4 +1,4 @@
-DROP     DATABASE agrodb;
+DROP     DATABASE IF EXISTS agrodb;
 CREATE   DATABASE agrodb;
 USE      agrodb;
 
@@ -45,20 +45,12 @@ CREATE TABLE deposit_attempts(
     PRIMARY KEY       (did)
 );
 
-CREATE TABLE notification_table(
-    nid         INT NOT NULL AUTO_INCREMENT,
-    userid      INT,
-    wallet_name INT
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW() ON UPDATE NOW(),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-)
 
 INSERT INTO transactions_type (type,name) VALUES (0, "Deposit");
 INSERT INTO transactions_type (type,name) VALUES (1, "Withdraw");
 INSERT INTO transactions_type (type,name) VALUES (2, "SendMoney");
 INSERT INTO transactions_type (type,name) VALUES (3, "SendToMpesa");
 
-DROP   TABLE transaction_costs;
 INSERT INTO transaction_costs (upper_limit,cost) VALUES (100,1);
 INSERT INTO transaction_costs (upper_limit,cost) VALUES (1000,5);
 INSERT INTO transaction_costs (upper_limit,cost) VALUES (10000,10);
@@ -70,8 +62,3 @@ INSERT INTO transaction_costs (upper_limit,cost) VALUES (999999999999,200);
 
 SELECT  cost FROM transaction_costs WHERE upper_limit >=10000 LIMIT 1;
 INSERT       INTO wallets_store (wallet_name,balance) VALUES("JOB",1000);
-SELECT   *   FROM wallets_store;
-
-
-INSERT INTO transactions_list (transuuid,sender_name,receiver_name,amount,charge,ttype) 
-VALUES ("Tx1010-ABCD-1201-A","T001","P001",1000,5,2);

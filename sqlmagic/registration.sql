@@ -1,11 +1,4 @@
-CREATE TABLE profile_images(
-    id           int IS NOT NULL AUTO_INCREMENT,
-    id_verification_url    VARCHAR(1000),
-    id_card_image_url      VARCHAR(1000),
-    PRIMARY KEY(id)
-);
-
-DROP TABLE user_registration;
+DROP TABLE IF EXISTS user_registration;
 CREATE TABLE user_registration (
     userid            int NOT NULL AUTO_INCREMENT,
     fname             VARCHAR(100),
@@ -26,7 +19,7 @@ CREATE TABLE user_registration (
     PRIMARY KEY (userid)
 );
 
-DROP TABLE registration_limbo;
+DROP TABLE IF EXISTS registration_limbo;
 CREATE TABLE registration_limbo (
     registerID      int NOT NULL AUTO_INCREMENT,
     fname           VARCHAR(100),

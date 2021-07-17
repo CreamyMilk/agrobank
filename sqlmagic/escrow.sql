@@ -1,4 +1,4 @@
-DROP TABLE escrowInvoices;
+DROP TABLE IF EXISTS escrowInvoices;
 CREATE TABLE escrowInvoices(
     eid                int NOT NULL AUTO_INCREMENT,
     reconciliationcode VARCHAR(20),

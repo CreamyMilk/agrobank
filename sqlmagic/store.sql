@@ -1,5 +1,5 @@
-DROP TABLE categories;
-DROP TABLE products;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS products;
 CREATE TABLE categories (
     category_id       INT NOT NULL AUTO_INCREMENT,
     category_name     VARCHAR(100) UNIQUE,
@@ -23,7 +23,6 @@ CREATE TABLE products (
     PRIMARY KEY(product_id),
     FOREIGN KEY (category_id) REFERENCES categories(category_id)
 );
-
 
 
 INSERT INTO categories (category_name,category_image) 
@@ -51,8 +50,6 @@ category_id,owner_id,product_name,product_image,product_image_large,
 descriptions,price,stock,product_packtype )
 VALUES (1,1,"Carrots","https://carotsimage.com","nolarge",
 "Carrots are good for your eyes",100,5,"Boxes");
-
-
 
 UPDATE products
 SET category_id=1,

@@ -1,5 +1,5 @@
-DROP TABLE m_categories;
-DROP TABLE machines;
+DROP TABLE IF EXISTS m_categories;
+DROP TABLE IF EXISTS machines;
 CREATE TABLE m_categories (
     category_id       INT NOT NULL AUTO_INCREMENT,
     category_name     VARCHAR(100) UNIQUE,
