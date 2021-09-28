@@ -1,4 +1,4 @@
-var serviceAccount = require("./bb.json");
+var serviceAccount = require("./cc.json");
 const express = require("express");
 const cors = require("cors");
 let admin = require('firebase-admin');
@@ -201,6 +201,6 @@ app.use((req, res, next) => {
     res.json({ status: "We are healthy" })
 })
 app.listen(port, () => {
-    sendToTopic("pppppppppp", "You Have received funds", "From James Kamau \n Receipt No:10101010101")
+    sendToTopic("all", "You Have received funds", "From James Kamau \n Receipt No:10101010101")
     console.log("FCM", port)
 })

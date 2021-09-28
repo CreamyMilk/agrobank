@@ -14,7 +14,7 @@ var DB *sql.DB
 // Database settings
 const (
 	host     = "localhost"
-  port     = "3306" // Default port
+	port     = "3306" // Default port
 	user     = "root"
 	password = "test_pass"
 	dbname   = "agrodb"
@@ -24,7 +24,7 @@ const (
 func Connect() error {
 	var err error
 
-  DB, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, password, host,port,dbname))
+	DB, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, password, host, port, dbname))
 	if err != nil {
 		return err
 	}

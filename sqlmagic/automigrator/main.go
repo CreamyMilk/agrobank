@@ -39,46 +39,44 @@ func connect() error {
 func runQuery(query string) error {
 	parsedQ := fmt.Sprintf("%s", query)
 	_, err := DB.Exec(parsedQ)
-  println(parsedQ)
+	println(parsedQ)
 	return err
 }
 
-func runAllSqlMigrations(){
-  validSqlFiles := []string{
-     "wallet.sql",
-     "registration.sql",
-     "store.sql",
-     "machine.sql",
-     "escrow.sql",
-  }
-  for _,file := range validSqlFiles{
-    path := fmt.Sprintf("../%s",file)
-    content, err := ioutil.ReadFile(path)
-    filedata := strings.Split(string(content), ";")
-    if err != nil {
-      log.Fatal(err)
-    }
+func runAllSqlMigrations() {
+	validSqlFiles := []string{
+		"wallet.sql",
+		"registration.sql",
+		"store.sql",
+		"machine.sql",
+		"escrow.sql",
+	}
+	for _, file := range validSqlFiles {
+		path := fmt.Sprintf("../%s", file)
+		content, err := ioutil.ReadFile(path)
+		filedata := strings.Split(string(content), ";")
+		if err != nil {
+			log.Fatal(err)
+		}
 
-    for _, data := range filedata[:len(filedata)-1] {
-      fmt.Print("+")
-      qerr := runQuery(data)
-      if qerr != nil {
-        println(path)
-        println(data)
-        log.Fatal(qerr)
-      }
-    }
-  }
+		for _, data := range filedata[:len(filedata)-1] {
+			fmt.Print("+")
+			qerr := runQuery(data)
+			if qerr != nil {
+				println(path)
+				println(data)
+				log.Fatal(qerr)
+			}
+		}
+	}
 }
-
 
 func main() {
 	err := connect()
-  if err != nil {
-    log.Fatal(err)
-  }
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println("Running Database Migrations")
-  runAllSqlMigrations()
+	runAllSqlMigrations()
 	fmt.Printf("\nDone\n")
 }
-
