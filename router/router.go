@@ -37,26 +37,13 @@ func SetupRoutes(app *fiber.App) {
 
 	invoice := v1.Group("/invoice")
 	invoice.Post("/create", createPurchaseInvoiceHandler)
-	// invoice.Post("/due", SellersOrdersHandler)
+	//invoice.Post("/due", SellersOrdersHandler)
 	// invoice.Post("/all", SellersOrdersHandler)
 	// invoice.Post("/settle", SellersOrdersHandler)
 	// invoice.Post("/cancel", SellersOrdersHandler)
-
 	app.Use(func(c *fiber.Ctx) error {
 		return c.Status(418).JSON(&fiber.Map{
 			"Message": "🍏 Route not found",
 		})
 	})
 }
-
-// func homeHandler(c *fiber.Ctx) error {
-// 	return c.JSON(&fiber.Map{
-// 		"Message": "Hello Handler",
-// 	})
-// }
-
-// func photoUploadHandler(c *fiber.Ctx) error {
-// 	return c.JSON(&fiber.Map{
-// 		"url": "https://localimagesstore/upload",
-// 	})
-// }

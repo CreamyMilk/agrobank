@@ -11,9 +11,16 @@ import (
 	"github.com/CreamyMilk/agrobank/router"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	err := godotenv.Load()
+	log.Println("Loading ENV from file")
+	if err != nil {
+		log.Fatal("Error loading .env file", err)
+	}
+
 	app := fiber.New()
 	app.Use(cors.New())
 	firenotifier.Init()

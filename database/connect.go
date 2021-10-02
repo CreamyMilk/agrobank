@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/CreamyMilk/agrobank/database/models"
 	"gorm.io/driver/mysql"
@@ -11,17 +12,15 @@ import (
 //DB holds global database object
 var DB *gorm.DB
 
-// Database settings
-const (
-	host     = "localhost"
-	port     = "3306" // Default port
-	user     = "root"
-	password = "test_pass"
-	dbname   = "AGRODB"
-)
-
 // Connect to db
 func Connect() error {
+	var (
+		host     = os.Getenv("DB_HOST")
+		port     = os.Getenv("DB_PORT")
+		user     = os.Getenv("DB_USER")
+		password = os.Getenv("DB_PASSWORD")
+		dbname   = os.Getenv("DB_STORAGENAME")
+	)
 	var err error
 	dbDSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", user, password, host, port, dbname)
 	DB, err = gorm.Open(mysql.Open(dbDSN), &gorm.Config{})
@@ -76,14 +75,3 @@ func SeedCategories() {
 		DB.Create(&singleCost)
 	}
 }
-
-// 	tt := []struct {
-// 		name      string
-// 		accountid string
-// 		balance   int64
-// 	}{
-// 		{"Normal", "N001", 600},
-// 		{"Negative", "Neg1", -100},
-// 		{"Decimal Positive", "DP1", 290},
-// 		{"Decimal Negative", "DN1", 90909},
-// 	}

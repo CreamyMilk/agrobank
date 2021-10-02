@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/CreamyMilk/agrobank/utils"
@@ -20,12 +21,15 @@ const (
 	RegistrationTypeSTK STKCallbackType = "registrationType"
 )
 
-const (
-	appKey            = "HMHVHRMFqLgCAwVVG2AMcQhIxTEj0CGc"
-	appSecret         = "3hX4Y98isZvf7mAS"
-	shortCode         = "174379"
-	passKey           = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
-	baseMpesaURL      = "https://sandbox.safaricom.co.ke/"
+func getMpesaUrl() string {
+	if os.Getenv("MPESA_PRODUCTION") != "" {
+		return "https://sandbox.safaricom.co.ke"
+	}
+	return "https://sandbox.safaricom.co.ke"
+}
+
+var (
+	baseMpesaURL      = getMpesaUrl()
 	transType         = "CustomerBuyGoodsOnline"
 	defaultApiTimeout = time.Minute
 )
@@ -43,7 +47,12 @@ func generatePasswordAndTimeStamp(shortCode, passkey string) (string, string) {
 }
 
 func getToken() string {
-	url := baseMpesaURL + "oauth/v1/generate?grant_type=client_credentials"
+	var (
+		appKey    = os.Getenv("MPESA_APP_KEY")
+		appSecret = os.Getenv("MPESA_APP_SECRET")
+	)
+	url := baseMpesaURL + "/oauth/v1/generate?grant_type=client_credentials"
+
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return ""
@@ -57,14 +66,17 @@ func getToken() string {
 	if err != nil {
 		return ""
 	}
+
 	if res != nil {
 		defer res.Body.Close()
 	}
+
 	var authResp authResponse
 	err = json.NewDecoder(res.Body).Decode(&authResp)
 	if err != nil {
 		return ""
 	}
+
 	accessToken := authResp.AccessToken
 	return accessToken
 }
@@ -72,16 +84,20 @@ func getToken() string {
 func getCallBackURl(t STKCallbackType) string {
 	switch t {
 	case DepositTypeSTK:
-		return "https://google.com/faker"
+		return os.Getenv("DEPOSITS_CALLBACK")
 
 	case RegistrationTypeSTK:
-		return "https://google.com/faker"
+		return os.Getenv("REGISTRATIONS_CALLBACK")
 	}
 
 	return ""
 
 }
 func SendSTK(phonenumber, amount, accountNo, notifToken string, paymentType STKCallbackType) (string, error) {
+	var (
+		shortCode = os.Getenv("MPESA_SHORT_CODE")
+		passKey   = os.Getenv("MPESA_PASS_KEY")
+	)
 	callbackUrl := getCallBackURl(paymentType)
 	transaction := new(MPesaStkRequest)
 	sendSTKUrl := baseMpesaURL + "/mpesa/stkpush/v1/processrequest"
