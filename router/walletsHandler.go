@@ -1,24 +1,28 @@
 package router
 
 import (
-	"github.com/CreamyMilk/agrobank/deposit"
-	"github.com/CreamyMilk/agrobank/login"
+	"log"
+
+	"github.com/CreamyMilk/agrobank/auth/registration"
+	"github.com/CreamyMilk/agrobank/database"
+	"github.com/CreamyMilk/agrobank/database/models"
 	"github.com/CreamyMilk/agrobank/mpesa"
 	"github.com/CreamyMilk/agrobank/wallet"
 	"github.com/gofiber/fiber/v2"
 )
 
 type depositRequest struct {
-	WalletName string `json:"walletname"`
-	Phone      string `json:"phonenumber"`
-	FmcToken   string `json:"fcmtoken"`
-	Amount     string `json:"amount"`
+	WalletAddress string `json:"walletname"`
+	Phone         string `json:"phonenumber"`
+	FmcToken      string `json:"fcmtoken"`
+	Amount        string `json:"amount"`
 }
 
 type sendMoneyrequest struct {
 	SenderWalletName     string `json:"from"`
 	ReceipientWalletName string `json:"to"`
 	Amount               int64  `json:"amount"`
+	Key                  string `json:"key"`
 }
 
 type verifyTransactionRequest struct {
@@ -28,14 +32,15 @@ type verifyTransactionRequest struct {
 
 //number,amount} =>  get Rates, calculate NewBalance, USERNAME
 type verificationResponse struct {
-	Rates      int64  `json:"rates"`
-	StatusCode int    `json:"status"`
-	Username   string `json:"username"`
-	Message    string `json:"message"`
+	Rates         int64  `json:"rates"`
+	StatusCode    int    `json:"status"`
+	Username      string `json:"username"`
+	WalletAddress string `json:"wallet_address"`
+	Message       string `json:"message"`
 }
 
 type getBalanceRequest struct {
-	WalletName string `json:"walletname"`
+	WalletAddress string `json:"walletname"`
 }
 
 type getTransactionsRequest struct {
@@ -53,7 +58,7 @@ func depositCashHandler(c *fiber.Ctx) error {
 			"message": "request is malformed",
 		})
 	}
-	userwallet := wallet.GetWalletByName(req.WalletName)
+	userwallet := wallet.GetWalletByAddress(req.WalletAddress)
 
 	if userwallet == nil {
 		return c.JSON(&fiber.Map{
@@ -61,7 +66,8 @@ func depositCashHandler(c *fiber.Ctx) error {
 			"message": "error retriving your wallet info",
 		})
 	}
-	checkoutID, err := mpesa.SendSTK(req.Phone, req.Amount, req.WalletName, req.FmcToken)
+
+	check, err := mpesa.SendSTK(req.Phone, req.Amount, userwallet.WalletAddress, req.FmcToken, mpesa.DepositTypeSTK)
 	if err != nil {
 		return c.JSON(&fiber.Map{
 			"status":  -3,
@@ -69,13 +75,15 @@ func depositCashHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	invoice := deposit.MakeInvoice(checkoutID, *userwallet, req.Amount)
-	err = invoice.Create()
-	if err != nil {
-		return c.JSON(&fiber.Map{
-			"status":  -4,
-			"message": err.Error(),
-		})
+	atmpr := &models.DepositAttempt{
+		CheckID:       check,
+		Amount:        req.Amount,
+		WalletAddress: userwallet.WalletAddress,
+	}
+	res := database.DB.Save(atmpr)
+
+	if res.Error != nil {
+		log.Println(res.Error)
 	}
 
 	return c.JSON(&fiber.Map{
@@ -100,19 +108,27 @@ func verifyTransactionHandler(c *fiber.Ctx) error {
 		res.Message = "Could not retrive the rates for the stated transaction"
 		return c.JSON(res)
 	}
-	identity, err := login.GetPersonByWalletName(req.Phone)
 
-	if err != nil {
+	identity := registration.GetUserDetailsByMobile(req.Phone)
+	if identity == nil {
 		res.StatusCode = -19
-		res.Message = "User is not registered yet"
+		res.Message = "Seems the User is not registerd to AgroCRM"
 		return c.JSON(res)
 	}
+	wall := wallet.GetWalletByPhone(req.Phone)
+	if wall == nil {
+		res.StatusCode = -19
+		res.Message = "Seems the User has no wallet to AgroCRM"
+		return c.JSON(res)
+	}
+	res.WalletAddress = wall.WalletAddress
 	res.StatusCode = 0
-	res.Username = identity
-	res.Message = "Successful"
+	res.Username = identity.Fullname
+	res.Message = "Successful Registration"
 	return c.JSON(res)
 }
 
+//Todo Add Password Auth
 func sendMoneyHandler(c *fiber.Ctx) error {
 	req := new(sendMoneyrequest)
 
@@ -122,16 +138,15 @@ func sendMoneyHandler(c *fiber.Ctx) error {
 			"message": "request is malformed",
 		})
 	}
-
 	//fmt.Printf("%+v", req)
-	fromWallet := wallet.GetWalletByName(req.SenderWalletName)
+	fromWallet := wallet.GetWalletByAddress(req.SenderWalletName)
 	if fromWallet == nil {
 		return c.JSON(&fiber.Map{
 			"status":  -2,
 			"message": "invalid sender wallet address",
 		})
 	}
-	toWallet := wallet.GetWalletByName(req.ReceipientWalletName)
+	toWallet := wallet.GetWalletByAddress(req.ReceipientWalletName)
 	if toWallet == nil {
 		return c.JSON(&fiber.Map{
 			"status":  -3,
@@ -139,17 +154,17 @@ func sendMoneyHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	errorMessage, sucessful := fromWallet.SendMoney(req.Amount, *toWallet)
+	sucessful, err := wallet.SendMoney(req.Amount, fromWallet.WalletAddress, toWallet.WalletAddress)
 	if !sucessful {
 		return c.JSON(&fiber.Map{
 			"status":  -10,
-			"message": errorMessage,
+			"message": err.Error(),
 		})
 	}
 
 	return c.JSON(&fiber.Map{
 		"status":     0,
-		"newbalance": fromWallet.GetBalance(),
+		"newbalance": wallet.GetWalletBalance(fromWallet.WalletAddress),
 		"messge":     "Succesfully SentMoney",
 	})
 }
@@ -164,18 +179,17 @@ func getBalanceHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	walletAddress := wallet.GetWalletByName(req.WalletName)
-	if walletAddress == nil {
+	w := wallet.GetWalletByAddress(req.WalletAddress)
+	if w == nil {
 		return c.JSON(&fiber.Map{
 			"status":  -2,
 			"message": "Error retriving account balance.Try again later.",
 		})
 	}
-	currentBalance := walletAddress.GetBalance()
 
 	return c.JSON(&fiber.Map{
 		"status":  0,
-		"balance": currentBalance,
+		"balance": w.Balance,
 	})
 }
 
@@ -187,14 +201,14 @@ func getTransactionsHandler(c *fiber.Ctx) error {
 			"message": "Malformed request",
 		})
 	}
-	w := wallet.GetWalletByName(req.WalletName)
+	w := wallet.GetWalletByAddress(req.WalletName)
 	if w == nil {
 		return c.JSON(&fiber.Map{
 			"status":  -19,
 			"message": "Sadly De wallet fake",
 		})
 	}
-	transacations, err := w.GetTransactions()
+	transacations, err := wallet.GetWalletTransactions(req.WalletName)
 
 	if err != nil {
 		return c.JSON(&fiber.Map{

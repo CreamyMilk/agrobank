@@ -3,13 +3,13 @@ package router
 import (
 	"fmt"
 
-	"github.com/CreamyMilk/agrobank/login"
+	"github.com/CreamyMilk/agrobank/auth/login"
 	"github.com/gofiber/fiber/v2"
 )
 
-func LoginHandler(c *fiber.Ctx) error {
+func loginHandler(c *fiber.Ctx) error {
 
-	req := new(login.LoginDetails)
+	req := new(login.LoginReq)
 
 	if err := c.BodyParser(req); err != nil {
 		fmt.Printf("%+v", err)

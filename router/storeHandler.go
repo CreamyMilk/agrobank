@@ -34,7 +34,28 @@ func addProductHandler(c *fiber.Ctx) error {
 		"message": "Added Product succesfully",
 	})
 }
+func addCategoriesHandler(c *fiber.Ctx) error {
+	tempCategory := new(store.Catergory)
 
+	if err := c.BodyParser(tempCategory); err != nil {
+		//fmt.Printf("%+v", err)
+		return c.JSON(&fiber.Map{
+			"status":  -1,
+			"message": "request is malformed",
+		})
+	}
+	if err := tempCategory.AddCategory(); err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -2,
+			"message": err.Error(),
+		})
+	}
+
+	return c.JSON(&fiber.Map{
+		"status":  0,
+		"message": "Added Category succesfully",
+	})
+}
 func upadateProductHandler(c *fiber.Ctx) error {
 	tempProduct := new(store.Product)
 
@@ -57,7 +78,6 @@ func upadateProductHandler(c *fiber.Ctx) error {
 		"message": "Updated Product succesfully",
 	})
 }
-
 func getUserStockhandler(c *fiber.Ctx) error {
 	req := new(getOwnersProductsRequest)
 	if err := c.BodyParser(req); err != nil {
@@ -76,7 +96,6 @@ func getUserStockhandler(c *fiber.Ctx) error {
 	}
 	return c.JSON(products)
 }
-
 func getAllCategoriesHandler(c *fiber.Ctx) error {
 	categories, err := store.GetCategories()
 
@@ -88,7 +107,6 @@ func getAllCategoriesHandler(c *fiber.Ctx) error {
 	}
 	return c.JSON(categories)
 }
-
 func getAllProductsByCategoryHandler(c *fiber.Ctx) error {
 	req := new(GetProductsByCategoryIDRequest)
 	if err := c.BodyParser(req); err != nil {
@@ -106,4 +124,46 @@ func getAllProductsByCategoryHandler(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(products)
+}
+
+func updateCategoryHandler(c *fiber.Ctx) error {
+	tempCategory := new(store.Catergory)
+	if err := c.BodyParser(tempCategory); err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -1,
+			"message": "request is malformed",
+		})
+	}
+	if err := tempCategory.UpdateCategory(); err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -2,
+			"message": err.Error(),
+		})
+	}
+
+	return c.JSON(&fiber.Map{
+		"status":  0,
+		"message": "Updated Category succesfully",
+	})
+}
+
+func deleteCategoryHandler(c *fiber.Ctx) error {
+	tempCategory := new(store.Catergory)
+	if err := c.BodyParser(tempCategory); err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -1,
+			"message": "request is malformed",
+		})
+	}
+	if err := tempCategory.DeleteCategory(); err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -2,
+			"message": err.Error(),
+		})
+	}
+
+	return c.JSON(&fiber.Map{
+		"status":  0,
+		"message": "Deleted category succesfully",
+	})
 }

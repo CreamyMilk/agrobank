@@ -2,187 +2,121 @@ package escrow
 
 import (
 	"errors"
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/CreamyMilk/agrobank/database"
-	"github.com/CreamyMilk/agrobank/notification"
+	"github.com/CreamyMilk/agrobank/database/models"
+	"github.com/CreamyMilk/agrobank/firenotifier"
 	"github.com/CreamyMilk/agrobank/store"
 	"github.com/CreamyMilk/agrobank/wallet"
+	"gorm.io/gorm"
 )
 
-//This package is responisible for the creation of secure payment channles between buyers and sellers
-type EscrowInvoice struct {
-	EscrowID    int64
-	Buyer       *wallet.Wallet
-	Seller      *wallet.Wallet
-	Product     *store.Product
-	TotalPrice  float64
-	CreatedAt   int64
-	Deadline    int64
-	CompletedAt int64
-}
-
-type EscrowTransactions struct {
-	EscrowID       int64   `json:"eid"`
-	BuyerName      string  `json:"buyer"`
-	SellerName     string  `json:"seller"`
-	ProductID      int64   `json:"productID,omitempty"`
-	ProductName    string  `json:"pname,omitempty"`
-	TotalPrice     float64 `json:"total"`
-	CompletionCode string  `json:"code,omitempty"`
-	CreatedAt      int64
-	Deadline       int64
-	CompletedAt    int64
-}
 type EscrowOrdersReponse struct {
-	Orders     []EscrowTransactions `json:"orders"`
-	StatusCode int                  `json:"status"`
-	Total      int64                `json:"total"`
+	Orders     []models.EscrowInvoice `json:"orders"`
+	StatusCode int                    `json:"status"`
+	Total      int64                  `json:"total"`
 }
 
-func GetInvoicesTowardsSeller(sellerWalletName string) (*EscrowOrdersReponse, error) {
-	seller := wallet.GetWalletByName(sellerWalletName)
-	if seller == nil {
-		return nil, errors.New("sadly you seem to not have a active mobile wallet")
-	}
-	result := new(EscrowOrdersReponse)
-	rows, err := database.DB.Query(`SELECT 
-		eid ,
-		senderWalletName       ,		
-		receiverWalletName     ,
-		prodcutID,  amount   
-		FROM escrowInvoices
-		WHERE 
-		receiverWalletName = ?;
-	`, seller.WalletName())
-	if err != nil {
-		result.StatusCode = -500
-		return result, err
-	}
+var (
+	errBuyerNotFound             = errors.New("could not get buyers wallet")
+	errProductNotFound           = errors.New("could not get product")
+	errSellerNotFound            = errors.New("the seller can't take this order currently")
+	errSelfPurchase              = errors.New("as a seller you cant purchase your own goods")
+	errLessStock                 = errors.New("their is no enough stock")
+	errNotEnoughMoney            = errors.New("you dont have enough money")
+	errCouldNotChargeForProduct  = errors.New("could not charge for the product")
+	errCouldNotUpdateStock       = errors.New("could not update stock")
+	errCouldNotCreateTransaction = errors.New("could not update stock")
+	errInvoiceCreationFailed     = errors.New("could not create invoice")
+)
 
-	for rows.Next() {
-		singleOrder := EscrowTransactions{}
-		if err := rows.Scan(
-			&singleOrder.EscrowID,
-			&singleOrder.BuyerName,
-			&singleOrder.SellerName,
-			&singleOrder.ProductID,
-			&singleOrder.TotalPrice,
-		); err != nil {
-			result.StatusCode = -501
-			return result, err
+func CreateEscrowTransaction(buyerWalletAddr string, productID int64, quantity int64) (*models.EscrowInvoice, error) {
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
+		//get buyer wallet
+		buyer := wallet.GetWalletByAddress(buyerWalletAddr)
+		if buyer == nil {
+			return errBuyerNotFound
 		}
-		result.Total += int64(singleOrder.TotalPrice)
-		result.Orders = append(result.Orders, singleOrder)
-	}
+		//get product
+		product := store.GetProductByProductID(productID)
+		if product == nil {
+			return errProductNotFound
+		}
+		//get sellers Address
+		seller := wallet.GetWalletByUserID(product.OwnerID)
+		if seller == nil {
+			return errSellerNotFound
+		}
+		//Own Purchase
+		if seller.WalletAddress == buyerWalletAddr {
+			return errSelfPurchase
+		}
+		//ensure stock Checkout
+		if product.Stock < quantity {
+			return errLessStock
+		}
+		//calculate total and check purchasing power
+		totalPrice := product.Price * quantity
+		if buyer.Balance < int64(totalPrice) {
+			return errNotEnoughMoney
+		}
+		//charge users wallet
+		buyer.Balance = buyer.Balance - int64(totalPrice)
+		chargeErr := tx.Save(buyer).Error
+		if chargeErr != nil {
+			return errCouldNotChargeForProduct
+		}
+		//Update Stock
+		product.Stock = product.Stock - quantity
+		stockErr := tx.Save(product).Error
+		if stockErr != nil {
+			return errCouldNotUpdateStock
+		}
+		//Create reconciliation
+		theFinalID := ReconciliationCodeGen()
+		//create transaction
+		var transs models.Transaction
+		transs.Amount = int64(totalPrice)
+		transs.Charge = 0
+		transs.From = buyerWalletAddr
+		transs.To = product.ProductName
+		transs.TypeName = models.PurchaseType
+		transs.TrackID = theFinalID
+		persistErr := tx.Create(&transs).Error
+		if persistErr != nil {
+			log.Println("Transation persist failed")
+			log.Println(persistErr)
+			return errCouldNotCreateTransaction
+		}
+		//create escrow
+		tempInvoice := &models.EscrowInvoice{
+			BuyerAddr:      buyerWalletAddr,
+			SellerID:       product.OwnerID,
+			ProductID:      product.ID,
+			ProductName:    product.ProductName,
+			Quantity:       quantity,
+			TotalPrice:     product.Price * quantity,
+			CompletionCode: theFinalID,
+			Deadline:       time.Now().Add(time.Hour * 96).Unix(),
+			Status:         "Placed",
+		}
+		invErr := tx.Create(tempInvoice).Error
+
+		if invErr != nil {
+			log.Println("Could not create invoice")
+			log.Println(invErr)
+			return errInvoiceCreationFailed
+		}
+
+		//That id can be a zero i presume
+		go firenotifier.SuccesfulPurchaseNotif(*product, seller.WalletAddress, "ORDER ID HERE")
+		return nil
+	})
+
 	if err != nil {
-		result.StatusCode = -502
-		return result, err
-	}
-	if result.Orders == nil {
-		result.StatusCode = -503
-	}
-	defer rows.Close()
-	return result, nil
-}
-
-func CreateEscrowTransaction(buyerWalletName string, productID int64, quantity int64) (*EscrowInvoice, error) {
-	buyer := wallet.GetWalletByName(buyerWalletName)
-	if buyer == nil {
-		return nil, errors.New("sadly you seem to not have a mobile wallet")
-	}
-	product := store.GetProductByProductID(productID)
-
-	if product == nil {
-		return nil, errors.New("the product you wish to purchase has been removed by the seller")
-	}
-	seller := product.GetWalletOfProductOwner()
-	if seller == nil {
-		return nil, errors.New("the seller is currently unavailable")
-	}
-
-	if buyer.WalletName() == seller.WalletName() {
-		return nil, errors.New("as a seller you cannot purchase your own goods")
-	}
-	//Checks that the user has the purchasing power to buy the requested product
-	totalPrice := product.Price * float64(quantity)
-	currentBuyerBalance := buyer.GetBalance()
-	if currentBuyerBalance <= int64(totalPrice) {
-		return nil, errors.New("the buyer has insuffiecnt funds to complete trasaction")
-	}
-	//this ensures that an order has benn placed an the new stock has been updated
-	tx, err := database.DB.Begin()
-	if err != nil {
-		fmt.Printf("Was unabke ti naje database trabsation %v", err)
-	}
-
-	//Create invoice
-	//This number is required for merchent reconciliation and payment money to be formalized
-	reconciliationCode := ReconciliationCodeGen()
-	_, err = tx.Exec(`INSERT INTO escrowInvoices(
-		reconciliationcode,
-		senderWalletName,
-		receiverWalletName,
-		prodcutID,
-		amount,
-		CreatedAt,
-		Deadline) 
-		VALUES (?,?,?,?,?,?,?)`,
-		reconciliationCode,
-		buyer.WalletName(),
-		seller.WalletName(),
-		product.ProductID,
-		totalPrice,
-		time.Now(),
-		time.Now().Add(time.Hour*STANDARD_DELIVERY_DURATION),
-	)
-	if err != nil {
-		fmt.Println(err)
-		tx.Rollback()
-		return nil, errors.New("could not create escrow invoice between you and the seller kindly try again later")
-	}
-
-	err = product.DeceremtStockBy(tx, quantity)
-	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
-
-	err = buyer.PayEscrow(tx, product.GetProductShortName(), reconciliationCode, int64(totalPrice))
-	if err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	tempInvoice := new(EscrowInvoice)
-	tempInvoice.Buyer = buyer
-	tempInvoice.Seller = seller
-	tempInvoice.Product = product
-	tempInvoice.TotalPrice = totalPrice
-
-	b, err := notification.SendOrderNotifcation(seller.WalletName(), product.ProductName, fmt.Sprintf("%d", quantity), fmt.Sprintf("%f", totalPrice))
-	if err != nil {
-		fmt.Println(b)
-		fmt.Println(err)
-	}
-	tx.Commit()
-
-	return tempInvoice, nil
+	return nil, nil
 }
-
-//Settle Escrow
-func (escrow *EscrowInvoice) Settle() error {
-	//Send Money to seller
-	//Inform the buyer
-	return nil
-}
-
-//Reverse Escrow
-func (escrow *EscrowInvoice) Reverse() error {
-	//Send Money back to the owner
-	//Inform the seller that the purchase did not go through due to time
-	return nil
-}
-
-//Get orders / Escrows for a particular seller

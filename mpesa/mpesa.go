@@ -6,19 +6,31 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
+
+	"github.com/CreamyMilk/agrobank/utils"
+)
+
+type STKCallbackType string
+
+const (
+	DepositTypeSTK      STKCallbackType = "depositType"
+	RegistrationTypeSTK STKCallbackType = "registrationType"
 )
 
 const (
-	appKey       = "HMHVHRMFqLgCAwVVG2AMcQhIxTEj0CGc" // sandbox --> change to yours
-	appSecret    = "3hX4Y98isZvf7mAS"
-	shortCode    = "174379" // sandbox --> change to yours
-	passKey      = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
-	baseMpesaURL = "https://sandbox.safaricom.co.ke/"
+	appKey            = "HMHVHRMFqLgCAwVVG2AMcQhIxTEj0CGc"
+	appSecret         = "3hX4Y98isZvf7mAS"
+	shortCode         = "174379"
+	passKey           = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
+	baseMpesaURL      = "https://sandbox.safaricom.co.ke/"
+	transType         = "CustomerBuyGoodsOnline"
+	defaultApiTimeout = time.Minute
 )
 
-type MPayments struct {
+type MPesaStkRequest struct {
 	MerchID    string `json:"id,omitempty" bson:"_id,omitempty"`
 	CheckoutID string `json:"CheckoutRequestID"`
 	Token      string `json:"token"`
@@ -57,39 +69,58 @@ func getToken() string {
 	return accessToken
 }
 
-func SendSTK(phonenumber, amount, accountNo, notifToken string) (string, error) {
-	transaction := new(MPayments)
+func getCallBackURl(t STKCallbackType) string {
+	switch t {
+	case DepositTypeSTK:
+		return "https://google.com/faker"
+
+	case RegistrationTypeSTK:
+		return "https://google.com/faker"
+	}
+
+	return ""
+
+}
+func SendSTK(phonenumber, amount, accountNo, notifToken string, paymentType STKCallbackType) (string, error) {
+	callbackUrl := getCallBackURl(paymentType)
+	transaction := new(MPesaStkRequest)
 	sendSTKUrl := baseMpesaURL + "/mpesa/stkpush/v1/processrequest"
-	transType := "CustomerPayBillOnline"
 	password, timestamp := generatePasswordAndTimeStamp(shortCode, passKey)
-	//fmt.Println(token)
 	jsonData := map[string]string{
 		"BusinessShortCode": shortCode,
 		"Password":          password,
 		"Timestamp":         timestamp,
-		"TransactionType":   transType, //CustomerPayBillOnline
+		"TransactionType":   transType,
 		"Amount":            amount,
 		"PartyA":            phonenumber,
 		"PartyB":            shortCode,
-		"PhoneNumber":       phonenumber,
-		"CallBackURL":       "http://34.125.117.7/stkcall", //Add ourcallback url here,
+		"PhoneNumber":       utils.ConvertTo254(phonenumber),
+		"CallBackURL":       callbackUrl,
 		"AccountReference":  accountNo,
 		"TransactionDesc":   "detail",
 	}
-	// fmt.Print(jsonData)
 	jsonValue, _ := json.Marshal(jsonData)
-	//fmt.Println(jsonData)
 	request, _ := http.NewRequest("POST", sendSTKUrl, bytes.NewBuffer(jsonValue))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", "Bearer "+getToken())
 	request.Header.Set("cache-control", "no-cache")
 	//fmt.Printf("%v", request)
-	client := &http.Client{}
-	response, _ := client.Do(request)
-	body, _ := ioutil.ReadAll(response.Body)
+	client := &http.Client{
+		Timeout: defaultApiTimeout,
+	}
+
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+
 	var tempSTK map[string]string
 	json.Unmarshal([]byte(body), &tempSTK)
-	//fmt.Printf("%v", tempSTK)
 	if tempSTK["ResponseCode"] == "0" {
 		transaction.CheckoutID = string(tempSTK["CheckoutRequestID"])
 		transaction.MerchID = string(tempSTK["MerchantRequestID"])

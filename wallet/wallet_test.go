@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -11,72 +12,42 @@ func TestBalance(t *testing.T) {
 	if err := database.Connect(); err != nil {
 		fmt.Printf("DB ERROR %v", err)
 	}
-	defer database.DB.Close()
 
 	tt := []struct {
-		name      string
-		accountid string
-		balance   int64
+		name           string
+		ownerid        string
+		deposoitAmount int64
+		expectedErr    error
 	}{
-		{"Normal", "N001", 600},
-		{"Negative", "Neg1", -100},
-		{"Decimal Positive", "DP1", 290},
-		{"Decimal Negative", "DN1", 90909},
+		{"Standard Wallet", "N001", 600, nil},
+		{"Decimal Negative", "DN1", 90909, nil},
+		{"Negative Wallet", "Neg-1", -2920, errNegativeDeposit},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			w := Wallet{name: tc.accountid, balance: tc.balance}
-			e := w.Create()
+			w, e := CreateWallet(1, tc.ownerid, "")
 			if e != nil {
 				t.Errorf("Cannot create account because %v", e)
+				return
 			}
-			balance := w.GetBalance()
-			if balance != tc.balance {
-				t.Errorf("Expected Wallet Balance to be %v but got %v", tc.balance, balance)
-			}
-			if err := w.Delete(); err != nil {
-				t.Errorf("Cannot delete wallet %s because : %v", w.name, err)
-			}
-		})
-	}
-}
+			er := DepositToAddress(w.WalletAddress, tc.deposoitAmount)
 
-func TestDeposit(t *testing.T) {
-	if err := database.Connect(); err != nil {
-		fmt.Printf("DB ERROR %v", err)
-	}
-	defer database.DB.Close()
-	tt := []struct {
-		name         string
-		accountid    string
-		inital       int64
-		deposit      int64
-		possible     bool
-		finalbalance int64
-	}{
-		{"Deposit", "A001", 100, 900, true, 1000},
-		{"New Account", "New01", 0, 2000, true, 2000},
-		{"Negative Deposits", "Negative", 3000, -234, false, 3000},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			w := Wallet{name: tc.accountid, balance: tc.inital}
-			e := w.Create()
-			if e != nil {
-				t.Errorf("Cannot create account because %v", e)
-			}
-			//Attempt to deposit
-			if w.Deposit(tc.deposit) == tc.possible {
-				//Check New Balance
-				newBalance := w.GetBalance()
-				if newBalance != tc.finalbalance {
-					t.Errorf("Inital Balance was %v Deposited Amount %v and expected Balance to be %v not -> %v", tc.inital, tc.deposit, tc.finalbalance, newBalance)
+			if er != nil {
+				if !errors.Is(er, tc.expectedErr) {
+					t.Errorf("Expected error to be %s but got %s %+v", tc.expectedErr, er.Error(), errors.Is(er, tc.expectedErr))
+					return
 				}
+				DeleteWallet(w.WalletAddress, w.ID)
+				return
 			}
-			if err := w.Delete(); err != nil {
-				t.Errorf("Cannot delete wallet %s because : %v", w.name, err)
+			newWallet := GetWalletByAddress(w.WalletAddress)
+			if newWallet.Balance != tc.deposoitAmount {
+				t.Errorf("Expected Wallet Balance to be %v but got %v", tc.deposoitAmount, newWallet.Balance)
+			}
+
+			if err := DeleteWallet(w.WalletAddress, w.ID); err != nil {
+				t.Errorf("Cannot delete wallet %s because : %v", w.WalletAddress, err)
 			}
 		})
 	}
@@ -86,10 +57,9 @@ func TestWitdrawals(t *testing.T) {
 	if err := database.Connect(); err != nil {
 		fmt.Printf("DB ERROR %v", err)
 	}
-	defer database.DB.Close()
 	tt := []struct {
 		name         string
-		accountid    string
+		address      string
 		inital       int64
 		withdrawal   int64
 		possible     bool
@@ -104,19 +74,23 @@ func TestWitdrawals(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			//Get Wallet
-			w := Wallet{name: tc.accountid, balance: tc.inital}
-			w.Create()
+			w, e := CreateWallet(1, tc.name, "")
+			if e != nil {
+				t.Errorf("Cannot create account because %v", e)
+				return
+			}
+			DepositToAddress(w.WalletAddress, tc.inital)
 			//Attempt to withdraw
-			if w.Withdraw(tc.withdrawal) == tc.possible {
+			if WithdrawFromWallet(w.WalletAddress, tc.withdrawal) == tc.possible {
 				//Check New Balance
-				newBalance := w.GetBalance()
+				newBalance := GetWalletBalance(w.WalletAddress)
 				if newBalance != tc.finalbalance {
-					t.Errorf("Inital Balance was %v ite Amount %v and expected Balance to be %v not -> %v", tc.inital, tc.withdrawal, tc.finalbalance, newBalance)
+					t.Errorf("Inital Balance was %v withdrew Amount %v and expected Balance to be %v not -> %v", tc.inital, tc.withdrawal, tc.finalbalance, newBalance)
 				}
 			}
 
-			if err := w.Delete(); err != nil {
-				t.Errorf("Cannot delete wallet %s because : %v", w.name, err)
+			if err := DeleteWallet(w.WalletAddress, w.ID); err != nil {
+				t.Errorf("Cannot delete wallet %s because : %v", w.WalletAddress, err)
 			}
 		})
 	}
@@ -126,7 +100,6 @@ func TestSendMoney(t *testing.T) {
 	if err := database.Connect(); err != nil {
 		fmt.Printf("DB ERROR %v", err)
 	}
-	defer database.DB.Close()
 	tt := []struct {
 		name       string
 		wallA      string
@@ -139,9 +112,9 @@ func TestSendMoney(t *testing.T) {
 		finalB     int64
 	}{
 		//{"Ghost Sending", "L001", 1000, "", 0, 10, false, 1000, 0},
+		//{"Sending to self", "A001", 100, "A001", 100, 40, false, 100, 100},
 		{"SendingZero", "L001", 1000, "F001", 500, 0, false, 1000, 500},
 		{"Too RichFor System", "BAZO001", 999999999999999999, "HUST0001", 999, 1000000000000000000, false, 999999999999999999, 999},
-		{"Sending to self", "A001", 100, "A001", 100, 40, false, 100, 100},
 		{"Confirm Charges", "HUSTER001", 150, "NDIZI", 5000, 148, false, 150, 5000},
 		{"Lacks Transaction Cost", "L001", 1000, "F001", 500, 999, false, 1000, 500},
 		{"NegativeAmount", "A002", 1000, "B002", 500, -23, false, 1000, 500},
@@ -154,16 +127,15 @@ func TestSendMoney(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			//Get Wallet
-			wA := Wallet{name: tc.wallA, balance: tc.aBalance}
-			wB := Wallet{name: tc.wallB, balance: tc.bBalance}
-			wA.Create()
-			wB.Create()
+			wA, _ := CreateWallet(1, tc.wallA, "")
+			wB, _ := CreateWallet(2, tc.wallB, "")
+			DepositToAddress(wA.WalletAddress, tc.aBalance)
+			DepositToAddress(wB.WalletAddress, tc.bBalance)
 			//Attempt to sendMoney
-			_, possible := wA.SendMoney(tc.sendAmount, wB)
+			possible, _ := SendMoney(tc.sendAmount, wA.WalletAddress, wB.WalletAddress)
 			if possible == tc.possible {
-				//Check New Balance
-				walletABal := wA.GetBalance()
-				walletBBal := wB.GetBalance()
+				walletABal := GetWalletBalance(wA.WalletAddress)
+				walletBBal := GetWalletBalance(wB.WalletAddress)
 				if walletABal != tc.finalA {
 					t.Errorf("Inital Balance of Wallet A was %v he sent Amount %v and expected Balance to be %v not -> %v", tc.aBalance, tc.sendAmount, tc.finalA, walletABal)
 				}
@@ -171,14 +143,15 @@ func TestSendMoney(t *testing.T) {
 					t.Errorf("Before Receiving amount %v from %v balance was %v but  after transaction expected Balance to be %v not -> %v", tc.sendAmount, tc.wallA, tc.aBalance, tc.finalB, walletBBal)
 				}
 			} else {
-				t.Errorf("The Transaction btwn %s and %s of amount %v seems to have been classified Wrongly", wA.name, wB.name, tc.sendAmount)
+				t.Errorf("The Transaction btwn %s and %s of amount %v seems to have been classified Wrongly", wA.WalletAddress, wB.WalletAddress, tc.sendAmount)
 			}
 
-			if err := wA.Delete(); err != nil {
-				t.Errorf("Cannot delete wallet %s because : %v", wA.name, err)
+			if err := DeleteWallet(wA.WalletAddress, wA.ID); err != nil {
+				t.Errorf("Cannot delete wallet %s because : %v", wA.WalletAddress, err)
 			}
-			if err := wB.Delete(); err != nil {
-				t.Errorf("Cannot delete wallet %s because : %v", wB.name, err)
+
+			if err := DeleteWallet(wB.WalletAddress, wB.ID); err != nil {
+				t.Errorf("Cannot delete wallet %s because : %v", wB.WalletAddress, err)
 			}
 		})
 	}

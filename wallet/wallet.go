@@ -1,153 +1,118 @@
 package wallet
 
 import (
-	"database/sql"
 	"errors"
-	"fmt"
+	"log"
 
 	"github.com/CreamyMilk/agrobank/database"
-	"github.com/CreamyMilk/agrobank/notification"
-	"github.com/go-sql-driver/mysql"
+	"github.com/CreamyMilk/agrobank/database/models"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
-//Wallet represents a users wallet in the system
-type Wallet struct {
-	name    string
-	balance int64 //Range: +/- 9,223,372,036,854,775,807. nine quantillion
+var (
+	errCouldNotGetTransactionCost = errors.New("could not get transaction cost")
+	errCouldNotDeleteWallet       = errors.New("could not delete the stated wallet")
+	errCouldNotGetWallet          = errors.New("could not get wallet")
+	errNegativeDeposit            = errors.New("cant handle negative deposits")
+	errDepoistUpdateFailed        = errors.New("could not update the wallet balance after deposit")
+	errCouldNotPersitTransaction  = errors.New("could not pesist transaction")
+	errSendingToSelf              = errors.New("you cannot send funds to self")
+	errTooMuchMoney               = errors.New("the stated amount is way higher than expected")
+	errNoTransactionCost          = errors.New("does not have transaction cost")
+)
+
+type TransactionsList struct {
+	Transactions []models.Transaction `json:"transactions"`
+	StatusCode   int                  `json:"status"`
 }
 
-type Transaction struct {
-	TransactionID string `json:"transactionid"`
-	From          string `json:"from"`
-	FromName      string `json:"fromName"`
-	To            string `json:"to"`
-	Amount        int64  `json:"amount"`
-	Charge        int64  `json:"charge"`
-	TypeID        int    `json:"typeid"`
-	TypeName      string `json:"typename"`
-	Timestamp     int64  `json:"timestamp"`
-}
-
-type Transactions struct {
-	Transactions []Transaction `json:"transactions"`
-	StatusCode   int           `json:"status"`
-}
-
-func GetWalletByName(name string) *Wallet {
-	tempWall := new(Wallet)
-	err := database.DB.QueryRow("SELECT wallet_name,balance FROM wallets_store WHERE wallet_name=? ", name).Scan(&tempWall.name, &tempWall.balance)
-	if err != nil {
+func GetWalletByAddress(address string) *models.Wallet {
+	var tempWallet models.Wallet
+	database.DB.First(&tempWallet, "wallet_address=?", address)
+	if tempWallet.WalletAddress == "" {
 		return nil
 	}
-	return tempWall
+	return &tempWallet
 }
 
-func MakeWallet(name string, amount int64) Wallet {
-	return Wallet{name: name, balance: amount}
+func GetWalletByPhone(mobile string) *models.Wallet {
+	var tempWallet models.Wallet
+	database.DB.First(&tempWallet, "phone_number=?", mobile)
+	if tempWallet.WalletAddress == "" {
+		return nil
+	}
+	return &tempWallet
 }
 
+func GetWalletByUserID(userid int64) *models.Wallet {
+	var tempWallet models.Wallet
+	database.DB.First(&tempWallet, "user_id=?", userid)
+	if tempWallet.WalletAddress == "" {
+		return nil
+	}
+	return &tempWallet
+}
 func GetTransactionPrice(amount int64) (int64, error) {
-	transactionCost := 0
-	err := database.DB.QueryRow("SELECT cost FROM transaction_costs WHERE upper_limit >= ? LIMIT 1", amount).Scan(&transactionCost)
+	var tempCost models.TransactionCost
+	err := database.DB.First(&tempCost, "upper_limit>=?", amount).Error
 	if err != nil {
-		return 0, errors.New("transaction cost coult not be determined")
+		return 0, errCouldNotGetTransactionCost
 	}
-	return int64(transactionCost), nil
+	return tempCost.Charge, nil
 }
 
-func (w *Wallet) WalletName() string {
-	return w.name
-}
+//CreateWallet Adds New wallet into db
+func CreateWallet(Userid uint, mobileNo string, passwordHash string) (*models.Wallet, error) {
+	var tempWallet models.Wallet
 
-//Create Adds New wallet into db
-func (w *Wallet) Create() error {
-	if w.name == "" {
-		return fmt.Errorf("cannot create accouts without id %v", "oya")
-	}
-	_, err := database.DB.Query("INSERT INTO wallets_store (wallet_name,balance) VALUES (?, ?)", w.name, w.balance)
+	tempWallet.WalletAddress = uuid.New().String()
+	tempWallet.PhoneNumber = mobileNo
+	tempWallet.UserID = Userid
+	tempWallet.Balance = 0
+	tempWallet.WalletHash = passwordHash
+	err := database.DB.Create(&tempWallet).Error
+
 	if err != nil {
-		if err.(*mysql.MySQLError).Number == 1062 { //Duplicate errors should be ignored
-			return nil
-		}
-		return (err)
+		return nil, err
 	}
-	return nil
+	return &tempWallet, nil
 }
 
 //Delete Destorys Wallets after testing
-func (w *Wallet) Delete() error {
-	_, err := database.DB.Exec("DELETE FROM wallets_store WHERE wallet_name = ?", w.name)
-	if err != nil {
-		return err
+func DeleteWallet(address string, walletid uint) error {
+	r := database.DB.Where("wallet_address=? AND id=?", address, walletid).Delete(&models.Wallet{})
+	if r.Error != nil {
+		return errCouldNotDeleteWallet
 	}
 	return nil
 }
 
 //GetBalance Fetches Wallet Balnce
-func (w *Wallet) GetBalance() int64 {
-	tempBalance := 0
-	err := database.DB.QueryRow("SELECT balance FROM wallets_store WHERE wallet_name = ?", w.name).Scan(&tempBalance)
-	if err != nil {
-		fmt.Printf("Unable to get balance coz of error %v", err)
-	}
-	w.balance = int64(tempBalance)
-	return w.balance
+func GetWalletBalance(address string) int64 {
+	var tempWallet models.Wallet
+	database.DB.First(&tempWallet, "wallet_address=?", address)
+	return tempWallet.Balance
 }
 
-func (w *Wallet) GetTransactions() (*Transactions, error) {
-	result := new(Transactions)
-	rows, err := database.DB.Query(`
-    SELECT  COALESCE(CONCAT(fname,' ',mname,' ',lname) ,receiver_name) as name,
-    transuuid,sender_name,
-    receiver_name,amount,
-    charge,ttype,
-    transactions_type.name as transactionName,
-    UNIX_TIMESTAMP(transactions_list.createdAt) as timestamp
-    FROM transactions_list 
-    LEFT JOIN user_registration 
-    ON user_registration.phonenumber=receiver_name
-    LEFT JOIN transactions_type 
-    ON transactions_list.ttype = transactions_type.type
-    WHERE (sender_name=? OR receiver_name=?) 
-    ORDER BY timestamp DESC LIMIT 15
-	`, w.name, w.name)
-
+func GetWalletTransactions(wallAddress string) (*TransactionsList, error) {
+	var list TransactionsList
+	err := database.DB.Where("transactions.to = ? OR transactions.from=?", wallAddress, wallAddress).Order("created_at desc").Find(&list.Transactions).Error
 	if err != nil {
-		result.StatusCode = -500
-		return result, err
+		list.StatusCode = -1
+		return &list, err
 	}
-
-	for rows.Next() {
-		singleTransaction := Transaction{}
-		if err := rows.Scan(
-			&singleTransaction.FromName,
-			&singleTransaction.TransactionID,
-			&singleTransaction.From,
-			&singleTransaction.To,
-			&singleTransaction.Amount,
-			&singleTransaction.Charge,
-			&singleTransaction.TypeID,
-			&singleTransaction.TypeName,
-			&singleTransaction.Timestamp); err != nil {
-			result.StatusCode = -501
-			return result, err
-		}
-		result.Transactions = append(result.Transactions, singleTransaction)
-	}
-	if err != nil {
-		result.StatusCode = -502
-		return result, err
-	}
-	if result.Transactions == nil {
-		result.StatusCode = -503
-	}
-	defer rows.Close()
-	return result, nil
+	return &list, nil
 }
 
 //Withdraw Initiates a withdrawal event
-func (w *Wallet) Withdraw(amount int64) bool {
-	currentBalance := w.GetBalance()
+//Todo do this in a transaction explisitly
+func WithdrawFromWallet(address string, amount int64) bool {
+	w := GetWalletByAddress(address)
+	if w == nil {
+		return false
+	}
+	currentBalance := w.Balance
 	if amount < 0 {
 		return false
 	}
@@ -155,169 +120,180 @@ func (w *Wallet) Withdraw(amount int64) bool {
 		return false
 	}
 	newBalance := currentBalance - amount
-	_, err := database.DB.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newBalance, w.name)
-	if err != nil {
-		fmt.Printf("-------------->%v", err)
-	}
-	w.balance = w.GetBalance()
+
+	w.Balance = newBalance
+	database.DB.Save(w)
+
 	return true
 }
 
 //Deposit is a transactional representaition of old deposit
-func (w *Wallet) Deposit(amount int64) bool {
-	tempBalance := 0
-	tx, err := database.DB.Begin()
+func DepositToAddress(address string, amount int64) error {
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
+		if amount < 1 {
+			return errNegativeDeposit
+		}
+		var currentWallet models.Wallet
+		res := tx.First(&currentWallet, "wallet_address=?", address)
+		if res.Error != nil {
+			if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+				return errCouldNotGetWallet
+			}
+			return res.Error
+		}
+		newBalance := currentWallet.Balance + amount
+		currentWallet.Balance = newBalance
+		finalUpdate := tx.Save(&currentWallet)
+		if finalUpdate.Error != nil {
+			log.Println("Deposits Service is crazy")
+			return errDepoistUpdateFailed
+		}
+		if finalUpdate.RowsAffected == 0 {
+			log.Println("Deposits didn't reach wallet")
+			return errDepoistUpdateFailed
+		}
+		var transs models.Transaction
+		transs.Amount = amount
+		transs.Charge = 0
+		transs.From = "Deposit Wallet"
+		transs.To = address
+		transs.TypeName = models.DepositType
+		transs.TrackID = uuidgen()
+		persistErr := tx.Create(&transs).Error
+		if persistErr != nil {
+			log.Println("Transation persist failed")
+			log.Println(persistErr)
+			return errCouldNotPersitTransaction
+		}
+		return nil
+	})
 	if err != nil {
-		tx.Rollback()
-		return false
+		log.Println("Transaction Creation freaking failed")
+		log.Println(err)
+		return err
 	}
-
-	getBalStm, err := tx.Prepare("SELECT balance FROM wallets_store WHERE wallet_name = ?")
-	getBalStm.QueryRow(w.name).Scan(&tempBalance)
-	defer getBalStm.Close()
-	if err != nil {
-		return false
-	}
-	newBalance := int64(tempBalance) + amount
-	if amount < 1 {
-		tx.Rollback()
-		return false
-	}
-	_, err = tx.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newBalance, w.name)
-	if err != nil {
-		tx.Rollback()
-		//fmt.Printf("-------------->%v", err)
-	}
-	w.balance = int64(tempBalance)
-	tx.Commit()
-	return true
+	return nil
 }
 
 //SendMoney is used to move money from account a to account b
-func (w *Wallet) SendMoney(amountToSend int64, recipientW Wallet) (string, bool) {
-	tx, err := database.DB.Begin()
-	errorMessage := ""
-	if err != nil {
-		tx.Rollback()
-		return errorMessage, false
-	}
+func SendMoney(amountToSend int64, senderAddress string, recipientAddr string) (bool, error) {
+
 	if amountToSend <= 0 {
-		errorMessage = "You cannot send negative values."
-		tx.Rollback()
-		return errorMessage, false
-	}
-	//You cannot send to self
-	if w.name == recipientW.name {
-		errorMessage = "Cannot send funds to self"
-		tx.Rollback()
-		return errorMessage, false
-	}
-	//get current balance
-	err = tx.QueryRow("SELECT balance FROM wallets_store WHERE wallet_name = ?", w.name).Scan(&w.balance)
-	if err != nil {
-		errorMessage = "Could not retrieve your balance."
-		tx.Rollback()
-		return errorMessage, false
+		return false, errNegativeDeposit
 	}
 
-	transactionCost := 0
-	err = tx.QueryRow("SELECT cost FROM transaction_costs WHERE upper_limit >= ? LIMIT 1", amountToSend).Scan(&transactionCost)
-	if err != nil {
-		errorMessage = "Could not retrieve your balance."
-		tx.Rollback()
-		return errorMessage, false
+	if senderAddress == recipientAddr {
+		return false, errSendingToSelf
 	}
-	//Transaction is over system limit
+	transactionCost, err := GetTransactionPrice(amountToSend)
+	if err != nil {
+		return false, err
+	}
 	if transactionCost == 0 {
-		errorMessage = "Too much funds requested."
-		tx.Rollback()
-		return errorMessage, false
+		return false, errTooMuchMoney
 	}
+	err = database.DB.Transaction(func(tx *gorm.DB) error {
+		var senderWallet models.Wallet
+		res := tx.First(&senderWallet, "wallet_address=?", senderAddress)
+		if res.Error != nil {
+			if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+				return errCouldNotGetWallet
+			}
+			return res.Error
+		}
 
-	if amountToSend+int64(transactionCost) >= w.balance {
-		errorMessage = "Does not have transaction cost."
-		tx.Rollback()
-		return errorMessage, false
-	}
+		var receiverWallet models.Wallet
+		res = tx.First(&receiverWallet, "wallet_address=?", recipientAddr)
+		if res.Error != nil {
+			if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+				return errCouldNotGetWallet
+			}
+			return res.Error
+		}
 
-	if recipientW.name == "" {
-		errorMessage = "The Receipient seems to be invalid."
-		tx.Rollback()
-		return errorMessage, false
-	}
+		if amountToSend+transactionCost >= senderWallet.Balance {
+			return errNoTransactionCost
+		}
 
-	newSenderBalance := w.balance - (amountToSend + int64(transactionCost))
-	_, err = tx.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newSenderBalance, w.name)
+		newSenderBalance := senderWallet.Balance - (amountToSend + (transactionCost))
+		senderWallet.Balance = newSenderBalance
+
+		finalUpdate := tx.Save(&senderWallet)
+		if finalUpdate.Error != nil {
+			log.Println("Could not persist sender wallet stuff")
+			return errDepoistUpdateFailed
+		}
+		if finalUpdate.RowsAffected == 0 {
+			log.Println("Deposits didn't reach sender wallet")
+			return errDepoistUpdateFailed
+		}
+
+		newRecipientBalance := receiverWallet.Balance + amountToSend
+		receiverWallet.Balance = newRecipientBalance
+
+		rr := tx.Save(&receiverWallet)
+		if rr.Error != nil {
+			log.Println("Could not persist sender wallet stuff")
+			return errDepoistUpdateFailed
+		}
+		if rr.RowsAffected == 0 {
+			log.Println("Deposits didn't reach recipient wallet")
+			return errDepoistUpdateFailed
+		}
+
+		var transs models.Transaction
+		transs.Amount = amountToSend
+		transs.Charge = transactionCost
+		transs.From = senderWallet.WalletAddress
+		transs.To = receiverWallet.WalletAddress
+		transs.TypeName = models.SendMoneyType
+		transs.TrackID = MakeTransactionCode()
+		persistErr := tx.Create(&transs).Error
+		if persistErr != nil {
+			log.Println("Transation persist failed")
+			log.Println(persistErr)
+			return errCouldNotPersitTransaction
+		}
+		return nil
+	})
 	if err != nil {
-		errorMessage = "No update to sender balance"
-		tx.Rollback()
-		return errorMessage, false
+		log.Println("didn't catch all the values")
+		return false, err
 	}
-
-	err = tx.QueryRow("SELECT balance FROM wallets_store WHERE wallet_name = ?", recipientW.name).Scan(&recipientW.balance)
-	if err != nil {
-		errorMessage = "Could not get current balance"
-		tx.Rollback()
-		return errorMessage, false
-	}
-	newRecipientBalance := recipientW.balance + amountToSend
-
-	_, err = tx.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newRecipientBalance, recipientW.name)
-	if err != nil {
-		errorMessage = "No update to receiver balance"
-		tx.Rollback()
-		return errorMessage, false
-	}
-
-	//generate transaction of what had occured
-	genereatedId := MakeTransactionCode()
-	_, err = tx.Exec("INSERT INTO transactions_list (transuuid,sender_name,receiver_name,amount,charge,ttype) VALUES (?,?,?,?,?,?)", genereatedId, w.name, recipientW.name, amountToSend, transactionCost, SENDMONEY_TYPE)
-	if err != nil {
-		errorMessage = ""
-		tx.Rollback()
-		return errorMessage, false
-	}
-	//Applys Changes to the database
-	tx.Commit()
-
-	_, err = notification.SendNotification(w.name, notification.SENDING_MONEY, amountToSend)
-	if err != nil {
-		fmt.Printf("Failed to send notifcation because %v", err)
-	}
-	_, err = notification.SendNotification(recipientW.name, notification.RECEVIEING_MONEY, amountToSend)
-	if err != nil {
-		fmt.Printf("Failed to send notifcation because %v", err)
-	}
-	return "", true
+	// 	//Applys Changes to the database
+	// 	_, err = notification.SendNotification(w.name, notification.SENDING_MONEY, amountToSend)
+	// 	if err != nil {
+	// 		fmt.Printf("Failed to send notifcation because %v", err)
+	// 	}
+	// 	_, err = notification.SendNotification(recipientW.name, notification.RECEVIEING_MONEY, amountToSend)
+	// 	if err != nil {
+	// 		fmt.Printf("Failed to send notifcation because %v", err)
+	// 	}
+	return true, nil
 }
-
 func MakeTransactionCode() string {
-	//Add check to ensure generated uuuids here
 	return uuidgen()
 }
 
-func (w *Wallet) PayEscrow(tx *sql.Tx, productShortName string, productCode string, amountPayable int64) error {
-
-	newRecipientBalance := w.GetBalance() - amountPayable
-
-	if newRecipientBalance < 0 {
-		tx.Rollback()
-		return errors.New("sadly you dont have enough funds to complete the trasaction")
-	}
-	_, err := tx.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newRecipientBalance, w.name)
-	if err != nil {
-		tx.Rollback()
-		return errors.New("sadly we were unable to charge you account kindly try again later")
-	}
-	//look into a way to charge to charge users if they place an order
-	transactionCost := 0
-	_, err = tx.Exec(`INSERT INTO transactions_list 
-	(transuuid,sender_name,receiver_name,amount,charge,ttype) 
-	VALUES (?,?,?,?,?,?)`, productCode, w.name, productShortName, amountPayable, transactionCost, ESCROW_PAYMENT)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	return nil
-}
+// func (w *Wallet) PayEscrow(tx *sql.Tx, productShortName string, productCode string, amountPayable int64) error {
+// 	newRecipientBalance := w.GetBalance() - amountPayable
+// 	if newRecipientBalance < 0 {
+// 		tx.Rollback()
+// 		return errors.New("sadly you dont have enough funds to complete the trasaction")
+// 	}
+// 	_, err := tx.Exec("UPDATE wallets_store SET balance=? WHERE wallet_name=?", newRecipientBalance, w.name)
+// 	if err != nil {
+// 		tx.Rollback()
+// 		return errors.New("sadly we were unable to charge you account kindly try again later")
+// 	}
+// 	//look into a way to charge to charge users if they place an order
+// 	transactionCost := 0
+// 	_, err = tx.Exec(`INSERT INTO transactions_list
+//  	(transuuid,sender_name,receiver_name,amount,charge,ttype)
+//  	VALUES (?,?,?,?,?,?)`, productCode, w.name, productShortName, amountPayable, transactionCost, ESCROW_PAYMENT)
+// 	if err != nil {
+// 		tx.Rollback()
+// 		return err
+// 	}
+// 	return nil
+// }

@@ -8,57 +8,55 @@ import (
 // SetupRoutes setup router api
 func SetupRoutes(app *fiber.App) {
 	app.Use(logger.New())
-	app.Post("/treg", TempRegistrationHandler)
-	app.Post("/stkcall", StkcallHandler)
-	app.Post("/login", LoginHandler)
 
-	wallet := app.Group("/wallet")
+	v1 := app.Group("/api/v1")
+	auth := v1.Group("/auth")
+	auth.Post("/register", tempRegistrationHandler)
+	auth.Post("/login", loginHandler)
 
+	callbacks := v1.Group("/callbacks")
+	callbacks.Post("/registrationstkpush", registrationStkCallHandler)
+	callbacks.Post("/depositstkpushendpoint", depositStkCallHandler)
+
+	wallet := v1.Group("/wallet")
 	wallet.Post("/deposit", depositCashHandler)
 	wallet.Post("/sendmoney", sendMoneyHandler)
 	wallet.Post("/balance", getBalanceHandler)
 	wallet.Post("/verify", verifyTransactionHandler)
 	wallet.Post("/transactions", getTransactionsHandler)
 
-	store := app.Group("/store")
-
+	store := v1.Group("/store")
 	store.Post("/add", addProductHandler)
 	store.Put("/update", upadateProductHandler)
 	store.Post("/stock", getUserStockhandler)
+	store.Put("/categories", updateCategoryHandler)
 	store.Get("/categories", getAllCategoriesHandler)
+	store.Post("/categories", addCategoriesHandler)
+	store.Delete("/categories", deleteCategoryHandler)
 	store.Post("/products", getAllProductsByCategoryHandler)
 
-	machine := app.Group("/machine")
-
-	machine.Post("/add", addProductHandler)
-	machine.Put("/update", upadateProductHandler)
-	machine.Post("/stock", getUserMachineshandler)
-	machine.Get("/categories", getAllMachineCategoriesHandler)
-	machine.Post("/products", getAllMachinarysByCategoryHandler)
-
-	invoice := app.Group("/invoice")
-
+	invoice := v1.Group("/invoice")
 	invoice.Post("/create", createPurchaseInvoiceHandler)
-	invoice.Post("/orders", SellersOrdersHandler)
+	// invoice.Post("/due", SellersOrdersHandler)
+	// invoice.Post("/all", SellersOrdersHandler)
+	// invoice.Post("/settle", SellersOrdersHandler)
+	// invoice.Post("/cancel", SellersOrdersHandler)
 
-	api := app.Group("/api")
-	api.Get("/", homeHandler)
-	app.Get("/imageupload", photoUploadHandler)
 	app.Use(func(c *fiber.Ctx) error {
 		return c.Status(418).JSON(&fiber.Map{
 			"Message": "🍏 Route not found",
-		}) // => 418 "I am a tepot"
+		})
 	})
 }
 
-func homeHandler(c *fiber.Ctx) error {
-	return c.JSON(&fiber.Map{
-		"Message": "Hello Handler",
-	})
-}
+// func homeHandler(c *fiber.Ctx) error {
+// 	return c.JSON(&fiber.Map{
+// 		"Message": "Hello Handler",
+// 	})
+// }
 
-func photoUploadHandler(c *fiber.Ctx) error {
-	return c.JSON(&fiber.Map{
-		"url": "https://localimagesstore/upload",
-	})
-}
+// func photoUploadHandler(c *fiber.Ctx) error {
+// 	return c.JSON(&fiber.Map{
+// 		"url": "https://localimagesstore/upload",
+// 	})
+// }

@@ -61,6 +61,22 @@ func SeedTransactionCosts() {
 	}
 }
 
+func SeedCategories() {
+	dtbl := []struct {
+		name string
+		img  string
+	}{
+		{"Cash Crop", "https://lh3.googleusercontent.com/proxy/zFDCbqU2Upu3ggEc-uaQ8xVq2HUvKoXFieir3jvLG7oXVLT4G81vuYv0zM6xktBAm7lBGM2L_CikcT0T0Akv4cy5lBAU2zu6vyZX3aPdYR-wqQARrQ0JIDDSTONOWyTKPsXyoUhQqvBLgagwv31H_oqk9n1xJsjXBku_CA"},
+	}
+	for _, t := range dtbl {
+		singleCost := models.Category{
+			CatergoryName:  t.name,
+			CatergoryImage: t.img,
+		}
+		DB.Create(&singleCost)
+	}
+}
+
 // 	tt := []struct {
 // 		name      string
 // 		accountid string

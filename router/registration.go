@@ -1,19 +1,19 @@
 package router
 
 import (
-	"github.com/CreamyMilk/agrobank/registration"
+	"github.com/CreamyMilk/agrobank/auth/registration"
 	"github.com/gofiber/fiber/v2"
 )
 
-func TempRegistrationHandler(c *fiber.Ctx) error {
-	r := new(registration.RegistrationLimbo)
+func tempRegistrationHandler(c *fiber.Ctx) error {
+	r := new(registration.TempRegistrationReq)
 	if err := c.BodyParser(r); err != nil {
 		return c.JSON(&fiber.Map{
 			"status":  -1,
 			"message": err.Error(),
 		})
 	}
-	err, topic := r.TempCreate()
+	topic, err := r.TempCreate()
 	if err != nil {
 		return c.JSON(&fiber.Map{
 			"status":  -1,
