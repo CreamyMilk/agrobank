@@ -37,7 +37,7 @@ func SetupRoutes(app *fiber.App) {
 
 	invoice := v1.Group("/invoice")
 	invoice.Post("/create", createPurchaseInvoiceHandler)
-	//invoice.Post("/due", SellersOrdersHandler)
+	invoice.Post("/due", SellersOrdersHandler)
 	// invoice.Post("/all", SellersOrdersHandler)
 	// invoice.Post("/settle", SellersOrdersHandler)
 	// invoice.Post("/cancel", SellersOrdersHandler)

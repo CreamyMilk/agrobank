@@ -65,7 +65,7 @@ func SeedCategories() {
 		name string
 		img  string
 	}{
-		{"Cash Crop", "https://lh3.googleusercontent.com/proxy/zFDCbqU2Upu3ggEc-uaQ8xVq2HUvKoXFieir3jvLG7oXVLT4G81vuYv0zM6xktBAm7lBGM2L_CikcT0T0Akv4cy5lBAU2zu6vyZX3aPdYR-wqQARrQ0JIDDSTONOWyTKPsXyoUhQqvBLgagwv31H_oqk9n1xJsjXBku_CA"},
+		{"Cash Crops","https://images.pexels.com/photos/3752402/pexels-photo-3752402.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"},
 	}
 	for _, t := range dtbl {
 		singleCost := models.Category{
