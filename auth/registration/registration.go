@@ -25,7 +25,7 @@ var (
 )
 
 const (
-	REGISTRATIONCOST    = 50
+	REGISTRATIONCOST    = 1
 	INITALWALLETDEPOSIT = 5
 	BcryptRounds        = 4
 )

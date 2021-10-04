@@ -25,12 +25,11 @@ func getMpesaUrl() string {
 	if os.Getenv("MPESA_PRODUCTION") != "" {
 		return "https://sandbox.safaricom.co.ke"
 	}
-	return "https://sandbox.safaricom.co.ke"
+	return "https://api.safaricom.co.ke"
 }
 
 var (
 	baseMpesaURL      = getMpesaUrl()
-	transType         = "CustomerBuyGoodsOnline"
 	defaultApiTimeout = time.Minute
 )
 
@@ -57,6 +56,7 @@ func getToken() string {
 	if err != nil {
 		return ""
 	}
+	fmt.Printf("key :%s, secret: %s \n\n", appKey, appSecret)
 	req.SetBasicAuth(appKey, appSecret)
 	req.Header.Add("cache-control", "no-cache")
 	req.Header.Add("Accept", "application/json")
@@ -97,7 +97,9 @@ func SendSTK(phonenumber, amount, accountNo, notifToken string, paymentType STKC
 	var (
 		shortCode = os.Getenv("MPESA_SHORT_CODE")
 		passKey   = os.Getenv("MPESA_PASS_KEY")
+		transType = os.Getenv("MPESA_TYPE")
 	)
+	fmt.Printf("ShortCode %s Pass Keys : %s \n", shortCode, passKey)
 	callbackUrl := getCallBackURl(paymentType)
 	transaction := new(MPesaStkRequest)
 	sendSTKUrl := baseMpesaURL + "/mpesa/stkpush/v1/processrequest"

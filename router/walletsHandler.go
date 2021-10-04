@@ -67,7 +67,7 @@ func depositCashHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	check, err := mpesa.SendSTK(req.Phone, req.Amount, userwallet.WalletAddress, req.FmcToken, mpesa.DepositTypeSTK)
+	check, err := mpesa.SendSTK(req.Phone, req.Amount, "Deposit", req.FmcToken, mpesa.DepositTypeSTK)
 	if err != nil {
 		return c.JSON(&fiber.Map{
 			"status":  -3,
