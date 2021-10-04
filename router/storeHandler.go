@@ -8,7 +8,9 @@ import (
 type getOwnersProductsRequest struct {
 	OwnerID int64 `json:"ownerid"`
 }
-
+type searchRequest struct {
+	Query string `json:"query"`
+}
 type GetProductsByCategoryIDRequest struct {
 	CategoryID int64 `json:"categoryid"`
 }
@@ -33,6 +35,25 @@ func addProductHandler(c *fiber.Ctx) error {
 		"status":  0,
 		"message": "Added Product succesfully",
 	})
+}
+func getSearchHandler(c *fiber.Ctx) error {
+	queryReq := new(searchRequest)
+
+	if err := c.BodyParser(queryReq); err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -1,
+			"message": "request is malformed",
+		})
+	}
+	result, err := store.SearchProducts(queryReq.Query)
+
+	if err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -2,
+			"message": err.Error(),
+		})
+	}
+	return c.JSON(result)
 }
 func addCategoriesHandler(c *fiber.Ctx) error {
 	tempCategory := new(store.Catergory)

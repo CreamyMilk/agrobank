@@ -34,11 +34,12 @@ func SetupRoutes(app *fiber.App) {
 	store.Post("/categories", addCategoriesHandler)
 	store.Delete("/categories", deleteCategoryHandler)
 	store.Post("/products", getAllProductsByCategoryHandler)
+	store.Post("/search", getSearchHandler)
 
 	invoice := v1.Group("/invoice")
 	invoice.Post("/create", createPurchaseInvoiceHandler)
 	invoice.Post("/due", SellersOrdersHandler)
-	// invoice.Post("/all", SellersOrdersHandler)
+	invoice.Post("/placed", buyerPlacedOrdersHandler)
 	// invoice.Post("/settle", SellersOrdersHandler)
 	// invoice.Post("/cancel", SellersOrdersHandler)
 	app.Use(func(c *fiber.Ctx) error {
