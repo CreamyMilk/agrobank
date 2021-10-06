@@ -256,6 +256,7 @@ func SendMoney(amountToSend int64, senderAddress string, recipientAddr string) (
 		}
 		return nil
 	})
+
 	if err != nil {
 		log.Println("didn't catch all the values")
 		return false, err
