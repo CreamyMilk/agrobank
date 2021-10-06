@@ -9,10 +9,10 @@ import (
 )
 
 type DueOrdersResponse struct {
-	Status  int               `json:"status"`
-	Orders  []DueOrder        `json:"orders"`
-	TotalValue  int64 `json:"total"`	
-	Mappers map[string]string `json:"mappings"`
+	Status     int               `json:"status"`
+	Orders     []DueOrder        `json:"orders"`
+	TotalValue int64             `json:"total"`
+	Mappers    map[string]string `json:"mappings"`
 }
 type DueOrder struct {
 	BuyerAddr   string `json:"buyer"`
@@ -53,7 +53,6 @@ func GetOrdersTowardsWalletAddr(wallAddr string) (*DueOrdersResponse, error) {
 		if !found {
 			fetchedWall := wallet.GetWalletByAddress(order.BuyerAddr)
 			walls[order.BuyerAddr] = fetchedWall.PhoneNumber
-			break
 		}
 	}
 	resp.Mappers = walls

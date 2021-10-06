@@ -96,6 +96,7 @@ func getCallBackURl(t STKCallbackType) string {
 func SendSTK(phonenumber, amount, accountNo, notifToken string, paymentType STKCallbackType) (string, error) {
 	var (
 		shortCode = os.Getenv("MPESA_SHORT_CODE")
+		till      = os.Getenv("MPESA_TILL")
 		passKey   = os.Getenv("MPESA_PASS_KEY")
 		transType = os.Getenv("MPESA_TYPE")
 	)
@@ -111,7 +112,7 @@ func SendSTK(phonenumber, amount, accountNo, notifToken string, paymentType STKC
 		"TransactionType":   transType,
 		"Amount":            amount,
 		"PartyA":            phonenumber,
-		"PartyB":            shortCode,
+		"PartyB":            till,
 		"PhoneNumber":       utils.ConvertTo254(phonenumber),
 		"CallBackURL":       callbackUrl,
 		"AccountReference":  accountNo,

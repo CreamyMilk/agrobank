@@ -65,7 +65,10 @@ func SeedCategories() {
 		name string
 		img  string
 	}{
-		{"Cash Crops","https://images.pexels.com/photos/3752402/pexels-photo-3752402.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"},
+		{"Groceries", "https://res.cloudinary.com/agrocr/image/upload/v1633492513/fresh-vegetables-on-grey-background-picture-id1251268582_tjgwa4.jpg"},
+		{"Cash Crops", "https://res.cloudinary.com/agrocr/image/upload/v1633492648/african-woman-holding-tea-leaves-rwanda-picture-id1138313836_nqkdwq.jpg"},
+		{"Farm Tools", "https://res.cloudinary.com/agrocr/image/upload/v1633492748/gardening-tools-seeds-and-soil-on-wooden-table-picture-id673641858_akwihu.jpg"},
+		{"Fruits", "https://res.cloudinary.com/agrocr/image/upload/v1633492934/photo-1610832958506-aa56368176cf_mnbh20.jpg"},
 	}
 	for _, t := range dtbl {
 		singleCost := models.Category{
