@@ -57,7 +57,8 @@ func (resp *StkpushCallbackResponse) ParseDeposits() {
 		attempt.Proccessed = true
 		database.DB.Save(attempt)
 		message := fmt.Sprintf("You wallet has beed debited with Ksh.%s", attempt.Amount)
-		go firenotifier.SuccesfulDepoistNotif(message, attempt.WalletAddress)
+
+		go firenotifier.SuccesfulDepoistNotif(message, attempt.WalletAddress, attempt.Amount)
 		log.Println("Deposits have been processed well")
 	}
 }

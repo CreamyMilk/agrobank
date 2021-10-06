@@ -41,6 +41,7 @@ func SetupRoutes(app *fiber.App) {
 	invoice.Post("/due", SellersOrdersHandler)
 	invoice.Post("/placed", buyerPlacedOrdersHandler)
 	invoice.Post("/settle", settleOrdersHandler)
+	invoice.Post("/search", searchInvoiceHandler)
 	// invoice.Post("/cancel", SellersOrdersHandler)
 	app.Use(func(c *fiber.Ctx) error {
 		return c.Status(418).JSON(&fiber.Map{

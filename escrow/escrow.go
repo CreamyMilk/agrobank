@@ -111,7 +111,7 @@ func CreateEscrowTransaction(buyerWalletAddr string, productID int64, quantity i
 		}
 
 		//That id can be a zero i presume
-		go firenotifier.SuccesfulPurchaseNotif(*product, seller.WalletAddress, "ORDER ID HERE")
+		go firenotifier.SuccesfulPurchaseNotif(*product, seller.WalletAddress, "")
 		return nil
 	})
 

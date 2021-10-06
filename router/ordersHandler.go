@@ -20,6 +20,11 @@ type buyerOrdersRequest struct {
 	WalletName string `json:"walletname"`
 }
 
+type buyerOrdersSearchRequest struct {
+	WalletName string `json:"walletname"`
+	Query      string `json:"query"`
+}
+
 func SellersOrdersHandler(c *fiber.Ctx) error {
 
 	req := new(sellerOrdersRequest)
@@ -82,4 +87,24 @@ func settleOrdersHandler(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(response)
+}
+
+func searchInvoiceHandler(c *fiber.Ctx) error {
+	queryReq := new(buyerOrdersSearchRequest)
+
+	if err := c.BodyParser(queryReq); err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -1,
+			"message": "request is malformed",
+		})
+	}
+	result, err := escrow.GetBuyerInvoicesSearch(queryReq.WalletName, queryReq.Query)
+
+	if err != nil {
+		return c.JSON(&fiber.Map{
+			"status":  -2,
+			"message": err.Error(),
+		})
+	}
+	return c.JSON(result)
 }

@@ -2,6 +2,7 @@ package escrow
 
 import (
 	"errors"
+	"log"
 
 	"github.com/CreamyMilk/agrobank/database"
 	"github.com/CreamyMilk/agrobank/database/models"
@@ -18,8 +19,19 @@ var (
 
 func GetBuyerInvoices(wallAddr string) (*PurchasesList, error) {
 	list := new(PurchasesList)
-	res := database.DB.Find(&list.Purchases, "buyer_addr=?", wallAddr)
+	res := database.DB.Order("created_at desc").Find(&list.Purchases, "buyer_addr=?", wallAddr)
 	if res.Error != nil {
+		return list, errCouldNotGetPurchases
+	}
+	return list, nil
+}
+
+func GetBuyerInvoicesSearch(wallAddr string, query string) (*PurchasesList, error) {
+	list := new(PurchasesList)
+	res := database.DB.Order("created_at desc").Find(&list.Purchases, "buyer_addr=? AND product_name LIKE ?", wallAddr, "%"+query+"%")
+	if res.Error != nil {
+		log.Println(res.Error)
+		list.Status = -1
 		return list, errCouldNotGetPurchases
 	}
 	return list, nil

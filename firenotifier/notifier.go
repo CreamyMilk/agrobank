@@ -113,7 +113,7 @@ func ContactTheDevTeam(header, message string) {
 	fmt.Printf("%s", result)
 }
 
-func SuccesfulDepoistNotif(message, walletAddress string) {
+func SuccesfulDepoistNotif(message, walletAddress, amount string) {
 	log.Printf("Sending Deposit message to %s \n ", message)
 	title := "🎉 Depoist is Successful"
 	notifType := "deposit"
@@ -121,7 +121,8 @@ func SuccesfulDepoistNotif(message, walletAddress string) {
 	messo := &messaging.Message{
 		Topic: walletAddress,
 		Data: map[string]string{
-			"type": notifType,
+			"type":   notifType,
+			"amount": amount,
 		},
 		Notification: &messaging.Notification{
 			Title: title,
@@ -155,7 +156,7 @@ func SuccesfulDepoistNotif(message, walletAddress string) {
 	fmt.Printf("%s", result)
 }
 
-func SuccesfulPurchaseNotif(p models.Product, sellerAddr string, orderID string) {
+func SuccesfulPurchaseNotif(p models.Product, sellerAddr, orderID string) {
 	log.Printf("Sending Purchase Notif message to %s \n ", sellerAddr)
 	title := fmt.Sprintf("🎉 An Order for '%s' has beed Placed", p.ProductName)
 	message := "Click to view more details"
@@ -163,8 +164,9 @@ func SuccesfulPurchaseNotif(p models.Product, sellerAddr string, orderID string)
 	messo := &messaging.Message{
 		Topic: sellerAddr,
 		Data: map[string]string{
-			"type":    notifType,
-			"orderid": orderID,
+			"type":     notifType,
+			"orderid":  orderID,
+			"prodname": p.ProductName,
 		},
 		Notification: &messaging.Notification{
 			Title: title,
@@ -185,8 +187,9 @@ func SuccesfulPurchaseNotif(p models.Product, sellerAddr string, orderID string)
 			},
 			CollapseKey: "ck",
 			Data: map[string]string{
-				"type":    notifType,
-				"orderid": orderID,
+				"type":     notifType,
+				"orderid":  orderID,
+				"prodname": p.ProductName,
 			},
 			Priority: "high",
 		},
