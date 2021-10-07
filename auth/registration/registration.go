@@ -62,7 +62,7 @@ func (r *TempRegistrationReq) TempCreate() (string, error) {
 	hash, _ := bcrypt.GenerateFromPassword([]byte(r.Pin), BcryptRounds)
 	computedHash := string(hash)
 
-	checkID, err := mpesa.SendSTK(r.PhoneNumber, strconv.Itoa(REGISTRATIONCOST), "Register", r.FcmToken, mpesa.DepositTypeSTK)
+	checkID, err := mpesa.SendSTK(r.PhoneNumber, strconv.Itoa(REGISTRATIONCOST), "Register", r.FcmToken, mpesa.RegistrationTypeSTK)
 	if err != nil {
 		log.Println(err)
 		return "", errCouldNotSendPayment

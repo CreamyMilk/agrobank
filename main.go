@@ -21,7 +21,10 @@ func main() {
 		log.Fatal("Error loading .env file", err)
 	}
 
-	app := fiber.New()
+  app := fiber.New(fiber.Config{
+    Prefork:       true,
+  })
+
 	app.Use(cors.New())
 	firenotifier.Init()
 	router.SetupRoutes(app)
