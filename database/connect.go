@@ -1,11 +1,11 @@
 package database
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/CreamyMilk/agrobank/database/models"
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -14,19 +14,16 @@ var DB *gorm.DB
 
 // Connect to db
 func Connect() error {
-	var (
-		host     = os.Getenv("DB_HOST")
-		port     = os.Getenv("DB_PORT")
-		user     = os.Getenv("DB_USER")
-		password = os.Getenv("DB_PASSWORD")
-		dbname   = os.Getenv("DB_STORAGENAME")
-	)
 	var err error
-	dbDSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", user, password, host, port, dbname)
-	DB, err = gorm.Open(mysql.Open(dbDSN), &gorm.Config{})
+	log.Print("Initialising Database...")
+
+	dsn := os.Getenv("DATABASE_URL")
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return err
+		log.Panic(err)
 	}
+	log.Print("Successfully connected!")
+
 	return nil
 }
 

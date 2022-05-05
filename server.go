@@ -7,7 +7,6 @@ import (
 
 	"github.com/CreamyMilk/agrobank/database"
 	"github.com/CreamyMilk/agrobank/database/models"
-	"github.com/CreamyMilk/agrobank/firenotifier"
 	"github.com/CreamyMilk/agrobank/router"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -21,12 +20,12 @@ func main() {
 		log.Fatal("Error loading .env file", err)
 	}
 
-  app := fiber.New(fiber.Config{
-    Prefork:       true,
-  })
+	app := fiber.New(fiber.Config{
+		Prefork: true,
+	})
 
 	app.Use(cors.New())
-	firenotifier.Init()
+	//firenotifier.Init()
 	router.SetupRoutes(app)
 	if err := database.Connect(); err != nil {
 		fmt.Printf("DB ERROR %v", err)
